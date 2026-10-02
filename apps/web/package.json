@@ -1,0 +1,11 @@
+{
+  "name": "@brevo-miniapp/web",
+  "version": "0.1.0",
+  "author": "Jordi Vilà",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "tsc --noEmit && vite build", "typecheck": "tsc --noEmit", "test": "node --import tsx --test test/*.test.ts" },
+  "dependencies": { "@brevo-miniapp/contracts": "0.1.0", "react": "19.3.0", "react-dom": "19.3.0" },
+  "devDependencies": { "vite": "8.3.2", "@vitejs/plugin-react": "6.1.1", "@types/react": "19.3.0", "@types/react-dom": "19.3.0" }
+}

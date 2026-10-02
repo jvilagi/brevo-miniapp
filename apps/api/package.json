@@ -1,0 +1,15 @@
+{
+  "name": "@brevo-miniapp/api",
+  "version": "0.1.0",
+  "author": "Jordi Vilà",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": { "@brevo-miniapp/contracts": "0.1.0", "fastify": "5.12.5", "@fastify/static": "10.1.5", "@fastify/cookie": "11.1.2", "@fastify/rate-limit": "11.2.0" }
+}

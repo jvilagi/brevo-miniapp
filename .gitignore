@@ -1,0 +1,30 @@
+# Secrets i configuració privada, també dins de subcarpetes
+.env
+.env.*
+!.env.example
+.secrets/
+secrets/
+private/
+accounts.env
+auth.env
+runtime.env
+compose.env
+*.pem
+*.key
+*.p12
+diagnostics/private/
+sources/
+
+# Dependències, compilació i resultats de proves
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+*.log
+
+# Fitxers locals de l'editor i macOS
+.DS_Store
+.idea/
+.vscode/

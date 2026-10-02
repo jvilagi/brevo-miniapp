@@ -1,0 +1,24 @@
+{
+  "name": "brevo-miniapp",
+  "version": "0.1.0",
+  "author": "Jordi Vilà",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "workspaces": ["apps/api", "apps/web", "packages/contracts"],
+  "devDependencies": { "typescript": "7.0.2", "tsx": "4.23.15", "@types/node": "24.19.0" },
+  "scripts": {
+    "setup:auth": "npm run build -w @brevo-miniapp/contracts && npm run build -w @brevo-miniapp/api && node scripts/setup-auth.mjs",
+    "dev": "npm run build -w @brevo-miniapp/contracts && node scripts/dev.mjs",
+    "build": "npm run build -w @brevo-miniapp/contracts && npm run build -w @brevo-miniapp/web && npm run build -w @brevo-miniapp/api",
+    "typecheck": "npm run build -w @brevo-miniapp/contracts && npm run typecheck --workspaces --if-present",
+    "test": "npm run build -w @brevo-miniapp/contracts && npm run test --workspaces --if-present",
+    "test:ui": "npm run build && node scripts/check-ui.mjs",
+    "test:pwa": "npm run build && node scripts/check-pwa.mjs",
+    "package:release": "node scripts/package-release.mjs",
+    "notices:generate": "node scripts/generate-notices.mjs",
+    "start": "node apps/api/dist/server.js",
+    "check": "npm run typecheck && npm test && npm run build && node scripts/check-boundaries.mjs"
+  }
+}

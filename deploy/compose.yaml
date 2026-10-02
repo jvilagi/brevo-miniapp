@@ -1,0 +1,54 @@
+name: brevo-miniapp
+services:
+  app:
+    image: brevo-miniapp:${BREVO_RELEASE:?Defineix BREVO_RELEASE al fitxer privat de Compose}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: brevo_miniapp
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 100
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    env_file:
+      - path: ${BREVO_PRIVATE_DIR:?Defineix BREVO_PRIVATE_DIR}/runtime.env
+        required: true
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      BREVO_SECRETS_FILE: /run/secrets/brevo-accounts.env
+      AUTH_SECRETS_FILE: /run/secrets/brevo-auth.env
+    volumes:
+      - type: bind
+        source: ${BREVO_PRIVATE_DIR}/accounts.env
+        target: /run/secrets/brevo-accounts.env
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${BREVO_PRIVATE_DIR}/auth.env
+        target: /run/secrets/brevo-auth.env
+        read_only: true
+        bind: { create_host_path: false }
+    networks:
+      web:
+        aliases: [brevo_miniapp]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health').then(async r=>{const d=await r.json();process.exit(r.ok&&d.status==='ok'&&d.service==='brevo-miniapp'?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options: { max-size: 5m, max-file: "2" }
+networks:
+  web:
+    external: true

@@ -1,0 +1,20 @@
+Brevo MiniApp
+
+Required Notice: Copyright © 2026 Jordi Vilà
+
+The original code and documentation of Brevo MiniApp are licensed under
+the PolyForm Noncommercial License 1.0.0. See LICENSE.
+
+Third-party dependencies and reference materials retain their own
+licenses and attribution notices. This notice does not relicense them.
+
+The MiniApp envelope symbol, installation icons, and control icons are
+original project assets covered by the project license. Official Brevo
+logos are not distributed. See apps/web/public/brand/README.md.
+
+The browser bundle contains React, React DOM, and Scheduler, under their
+own MIT licenses. Their complete notices are in THIRD_PARTY_NOTICES.md.
+
+Brevo MiniApp is an independent project, not an official Brevo product.
+Brevo names and marks belong to their respective owners; this license
+does not grant rights to third-party trademarks.
