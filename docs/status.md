@@ -45,7 +45,19 @@ Clonació nova des de GitHub amb `npm ci --include=optional` i
 inicial, correu `noreply` de GitHub i cap branca o tag privat. Revisió
 prèvia dels 81 fitxers publicats: sense coincidències amb les claus,
 hash o secret coneguts ni patrons de credencials examinats; enllaços
-locals i avisos complets del bundle comprovats.
+locals i avisos complets del bundle comprovats. Revisió posterior de
+l'historial recuperat de GitHub (dos commits i 82 blobs en aquell punt):
+historial privat absent, només correu `noreply` i cap coincidència amb
+els secrets coneguts o els patrons examinats.
+
+Marca pròpia desplegada en la instància privada el 2026-10-02, a partir
+del commit públic `d584c48`. Contenidor saludable; versió anterior,
+imatge i referències de retorn conservades. Credencials, configuració
+privada, Caddy, DNS i serveis aliens no modificats. Sessions revocades
+pel reinici; mateixa contrasenya. Avisos de llicència presents a runtime.
+HTTPS verificat amb Chrome mòbil: marca i icones idèntiques al codi,
+login genèric, API sense sessió `401`, `no-store`, worker estàtic, offline
+i represa. Aquesta comprovació no ha fet login ni consultat dades reals.
 
 Pendent Safari/WebKit i instal·lació/standalone en iPhone real. El runtime
 WebKit disponible al Mac de desenvolupament no és compatible amb macOS 13.

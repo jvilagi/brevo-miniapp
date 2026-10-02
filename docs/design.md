@@ -48,8 +48,9 @@ vores fines, sense les ombres anteriors; fons principal blanc, menta per
 a seleccions i violeta per a accions secundàries. La MiniApp manté l'avís
 de projecte independent, no oficial. Els logotips es serveixen localment
 i s'inclouen a la cache només estàtica; no es carreguen recursos remots.
-La versió anterior es va desplegar el 2026-10-01. La marca pròpia es
-comprova abans de publicar i actualitzar el desplegament privat.
+Marca pròpia comprovada amb Chrome i desplegada en la instància privada
+el 2026-10-02, amb login genèric. Les captures de proves només contenen
+dades sintètiques. La versió anterior es conserva per a un possible retorn.
 
 ## Flux implementat
 
