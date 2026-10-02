@@ -14,9 +14,12 @@ La integració real i el desplegament privat HTTPS s'han verificat el
 2026-10-01. Els saldos, credencials i detalls personals d'aquella
 instal·lació no formen part de la documentació pública.
 
-## Preparació de la publicació
+## Publicació
 
 Publicació aprovada, amb PolyForm Noncommercial 1.0.0 i autoria Jordi Vilà.
+Repositori públic creat el 2026-10-02:
+[jvilagi/brevo-miniapp](https://github.com/jvilagi/brevo-miniapp).
+Primer commit públic `e3cfc05`, sense pares; només s'ha pujat `main`.
 Marca pròpia aprovada el 2026-10-02: símbol de sobre i distintiu violeta,
 paleta inspirada en Brevo, sense logotips oficials. Login genèric.
 Guia per a claus pròpies i plantilla buida disponibles; producció exigeix
@@ -36,6 +39,13 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
+
+Clonació nova des de GitHub amb `npm ci --include=optional` i
+`npm run check` verificada. Historial descarregat amb un únic commit
+inicial, correu `noreply` de GitHub i cap branca o tag privat. Revisió
+prèvia dels 81 fitxers publicats: sense coincidències amb les claus,
+hash o secret coneguts ni patrons de credencials examinats; enllaços
+locals i avisos complets del bundle comprovats.
 
 Pendent Safari/WebKit i instal·lació/standalone en iPhone real. El runtime
 WebKit disponible al Mac de desenvolupament no és compatible amb macOS 13.
