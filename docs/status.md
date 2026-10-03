@@ -79,5 +79,12 @@ La causa exacta d'un desfasament puntual no s'ha acreditat.
 Afegida una prova de presentació i un cas de navegador amb zero
 sol·licituds SMTP i saldo Free inferior al límit, amb dades sintètiques.
 32 proves, tipus, compilació, separació de secrets i comprovacions Chrome
-UI/PWA superades; captura mòbil revisada. Publicació i desplegament
-d'aquesta correcció pendents a continuació.
+UI/PWA superades; captura mòbil revisada. Correcció publicada i desplegada
+el 2026-10-03 a partir del commit públic `daaeaa2`, amb paquet sense canvis
+locals pendents, SHA-256 verificat i contenidor saludable. Versió anterior,
+imatge i configuració de retorn conservades; claus, Caddy, DNS i serveis
+aliens no modificats. El reinici revoca les sessions, no la contrasenya.
+HTTPS comprovat amb Chrome mòbil, API sense sessió `401`, `no-store`,
+worker, offline i represa. El JavaScript públic coincideix byte a byte
+amb el compilat verificat i ja no inclou l'afirmació de reinici a mitjanit.
+La comprovació pública no ha fet login ni consultat dades dels comptes.
