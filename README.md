@@ -55,6 +55,8 @@ han de viure fora del codi i de la imatge Docker.
   antigues identificades, fins a 15 minuts. Una dada absent no és zero.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
   calcula com `300 - enviats` ni se sumen crèdits prepagament i quota Free.
+  L'hora exacta de reinici Free no està verificada; la pantalla no la
+  promet ni assumeix que el saldo i les estadístiques canvien alhora.
 - SMTP i campanyes de màrqueting són fonts separades. Els totals únics
   provenen de l'informe agregat, no de sumar dies.
 - Service worker només estàtic: no desa API, sessions o dades autenticades.
@@ -70,7 +72,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 31 proves (27 API + 4 presentació), compilació i separació
+Comprova tipus, 32 proves (27 API + 5 presentació), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

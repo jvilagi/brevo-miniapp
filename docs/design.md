@@ -65,6 +65,8 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 - Quota Free: saldo diari llegit de l'API i barra del disponible sobre
   300. Prepagament: saldo llegit de l'API, sense afegir quota Free ni
   inventar una referència per a una barra de consum.
+  La targeta Free indica «Saldo disponible» segons Brevo i no promet
+  una hora de reinici ni sincronització amb el dia de les mètriques SMTP.
 - Desplegable amb Avui / Últims 7 dies, mètriques de l'agregat i totes
   les mètriques opcionals. Les úniques no se sumen ni s'etiqueten com
   a persones úniques o obertures estimades.
@@ -95,10 +97,13 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 
 ## Comprovacions
 
-- 4 proves de presentació: format català, desconeguts, Free/prepagament,
-  escala i buits del gràfic, dades antigues i fus horari.
+- 5 proves de presentació: format català, desconeguts, Free/prepagament,
+  saldo sense hora de reinici no verificada, escala i buits del gràfic,
+  dades antigues i fus horari.
 - `scripts/check-ui.mjs`: Chrome real en mode headless, context mòbil
   tàctil, amplades de 320, 375, 390, 430 i 1280 px, sense desbordament.
+  Cas de regressió sintètic: zero sol·licituds avui amb saldo Free
+  inferior a 300, valor conservat i absència d'una hora de reinici.
 - Login simplificat comprovat també a 760 i 761 px: absència de tots
   els textos retirats, un únic títol principal i formulari centrat.
   Captures mòbil i escriptori revisades després del canvi local.

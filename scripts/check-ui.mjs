@@ -15,8 +15,8 @@ const period = { startDate: '2026-09-25', endDate: '2026-10-01', timezone: 'Etc/
 const metrics = normalizeSmtpMetrics({ requests: 150, delivered: 135, opens: 68, uniqueOpens: 40, clicks: 12, uniqueClicks: 7, blocked: 14, hardBounces: 1, softBounces: 0, invalid: 0, unsubscribed: 0, spamReports: 0 });
 const section = (data) => ({ data, status: 'fresh', updatedAt: '2026-10-01T11:56:00Z', error: null });
 const makeAccount = (id) => ({ id, name: `Compte ${id}`, source: 'brevo',
-  quota: section(id === '1' ? { regime: 'prepaid', available: 8400, dailyLimit: null } : { regime: 'free', available: 285, dailyLimit: 300 }),
-  smtp: { source: 'smtp', period, today: { period: { ...period, startDate: period.endDate }, report: section(id === '1' ? metrics : { ...metrics, requests: 15, delivered: 15 }) },
+  quota: section(id === '1' ? { regime: 'prepaid', available: 8400, dailyLimit: null } : { regime: 'free', available: 249, dailyLimit: 300 }),
+  smtp: { source: 'smtp', period, today: { period: { ...period, startDate: period.endDate }, report: section(id === '1' ? metrics : Object.fromEntries(Object.keys(metrics).map((metric) => [metric, 0]))) },
     totals: section({ ...metrics, requests: 1200, uniqueOpens: 518 }),
     daily: section({ days: [20, 0, 45, 110, 75, null, 150].map((requests, index) => ({ date: index < 6 ? `2026-09-${25 + index}` : '2026-10-01', currentDay: index === 6,
       metrics: normalizeSmtpMetrics({ ...metrics, requests }), zeroFilled: [] })) }),
@@ -81,7 +81,13 @@ async function verify(browserType, label, executablePath) {
     await page.getByLabel('Contrasenya').fill(password); await page.getByRole('button', { name: 'Entra a la MiniApp' }).click();
     await page.locator('.account-card.account-1').waitFor();
     assert.equal(await page.locator('.account-card').count(), 2);
-    assert.equal(await page.getByRole('meter').getAttribute('aria-valuenow'), '285');
+    assert.equal(await page.getByRole('meter', { name: 'Saldo Free disponible segons Brevo' }).getAttribute('aria-valuenow'), '249');
+    assert.equal(await page.locator('.account-2 .today-number strong').innerText(), '0');
+    assert.equal(await page.locator('.account-2 .balance-number strong').innerText(), '249');
+    assert.equal(await page.locator('.account-2 .balance-number .number-label').innerText(), 'Saldo disponible');
+    assert.equal(await page.locator('.account-2 .balance-number .number-source').innerText(), 'Segons Brevo · quota de 300/dia');
+    assert((await page.locator('.account-2 .account-note').innerText()).includes('hora exacta no està verificada'));
+    assert(!(await page.locator('.account-2').innerText()).includes('00:00'));
     assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '8.400');
     await noOverflow(page); await page.screenshot({ path: join(directory, `${label}-overview.png`), fullPage: true });
     const card = page.locator('.account-1');

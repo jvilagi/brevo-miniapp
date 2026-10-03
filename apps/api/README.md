@@ -54,8 +54,10 @@ Cache en memòria de 60 segons per compte, font i període, amb reutilització
 de peticions simultànies. En error es pot servir l'última dada fins a
 15 minuts d'antiguitat, marcada `stale` amb la data original; després
 és `unavailable`, amb `data: null`. Els errors tenen una pausa de reintent
-de 10 segons. La quota té cache per compte i dia per no reutilitzar el
-saldo Free del dia anterior en el reinici de mitjanit.
+de 10 segons. La quota té cache per compte i dia: a mitjanit del fus
+configurat es consulta de nou Brevo, sense reutilitzar la cache d'ahir.
+Això no implica que Brevo hagi reiniciat el saldo en aquell moment;
+l'hora exacta de reinici no està verificada i el saldo no es recalcula.
 Un nou dia crea noves claus SMTP i no reutilitza dades d'ahir com a avui.
 Cada secció conserva estat, timestamp i error, sense anul·lar altres
 fonts o comptes. Les respostes HTTP autenticades sempre són `no-store`.

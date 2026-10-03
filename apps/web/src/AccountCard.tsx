@@ -31,14 +31,14 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
         <span className="number-source">Enviament transaccional</span><Provenance section={smtp.today.report} timezone={timezone} locallyStale={locallyStale}/>
       </div>
       <div className="balance-number"><span className="number-label">{info.title}</span><strong>{number(info.available)}</strong>
-        <span className="number-source">{quota.data?.regime === 'prepaid' ? 'Saldo prepagament' : quota.data?.regime === 'free' ? 'De la quota diària de 300' : 'Segons el pla de Brevo'}</span>
+        <span className="number-source">{info.source}</span>
         <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
       </div>
     </div>
-    {info.fraction !== null && <div className="quota-track" role="meter" aria-label="Quota Free disponible avui" aria-valuemin={0} aria-valuemax={300} aria-valuenow={info.available!}>
+    {info.fraction !== null && <div className="quota-track" role="meter" aria-label="Saldo Free disponible segons Brevo" aria-valuemin={0} aria-valuemax={300} aria-valuenow={info.available!}>
       <span style={{ width: `${info.fraction * 100}%` }}/>
     </div>}
-    <div className="account-note">{quota.data?.regime === 'prepaid' ? 'Els crèdits substitueixen ara la quota Free.' : quota.data?.regime === 'free' ? `Reinici diari a les 00:00 · ${zoneLabel(timezone)}` : 'El règim de quota encara no es pot confirmar.'}</div>
+    <div className="account-note">{info.note}</div>
     <button type="button" className="expand-button" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen(!open)}>
       <span>{open ? 'Amaga les estadístiques' : 'Estadístiques i evolució'}</span><Icon name="chevron" className={open ? 'is-open' : ''}/>
     </button>

@@ -19,10 +19,14 @@ export function zoneLabel(timezone: string) {
     .find((part) => part.type === 'timeZoneName')?.value ?? timezone;
 }
 export function quotaPresentation(quota: Quota | null) {
-  if (quota?.regime === 'prepaid') return { title: 'Crèdits disponibles', badge: 'Prepagament', available: quota.available, fraction: null };
-  if (quota?.regime === 'free') return { title: 'Disponibles avui', badge: 'Free · 300/dia', available: quota.available,
+  if (quota?.regime === 'prepaid') return { title: 'Crèdits disponibles', badge: 'Prepagament', available: quota.available, fraction: null,
+    source: 'Saldo prepagament', note: 'Els crèdits substitueixen ara la quota Free.' };
+  if (quota?.regime === 'free') return { title: 'Saldo disponible', badge: 'Free · 300/dia', available: quota.available,
+    source: 'Segons Brevo · quota de 300/dia',
+    note: 'Brevo gestiona el reinici diari. L’hora exacta no està verificada.',
     fraction: quota.available <= quota.dailyLimit ? quota.available / quota.dailyLimit : null };
-  return { title: 'Saldo disponible', badge: 'Pla per confirmar', available: null, fraction: null };
+  return { title: 'Saldo disponible', badge: 'Pla per confirmar', available: null, fraction: null,
+    source: 'Segons el pla de Brevo', note: 'El règim de quota encara no es pot confirmar.' };
 }
 export function sectionStatus(section: DataSection<unknown>, locallyStale = false) {
   if (section.status === 'unavailable') return 'No disponible';

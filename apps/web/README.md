@@ -34,7 +34,9 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-4 proves de presentació incloses a `npm test`. La comprovació de navegador
+5 proves de presentació incloses a `npm test`, inclòs el saldo Free
+independent de les sol·licituds SMTP i sense hora de reinici inventada.
+La comprovació de navegador
 és separada: `npm run test:ui` compila i executa `scripts/check-ui.mjs`
 amb dades sintètiques i un servidor temporal local; no carrega secrets.
 Necessita Playwright (local o mòdul del runtime indicat amb

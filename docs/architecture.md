@@ -47,7 +47,7 @@ Hi ha 27 proves d'accés privat, sessions, límits d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 4 proves de presentació i la
+verificat amb els dos comptes reals. Hi ha 5 proves de presentació i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
@@ -102,8 +102,11 @@ Fet el 2026-10-01:
 6. Els saldos i el consum s'han contrastat amb la interfície dels dos
    comptes. El Compte 1 consumeix un crèdit prepagament per enviament; al
    Compte 2, el saldo retornat encaixa amb la quota Free restant.
-7. La interfície dels dos comptes mostra GMT+2 i el responsable de la instal·lació confirma que la
-   quota diària es reinicia a les 00:00 en aquest fus horari.
+7. La interfície dels dos comptes mostra GMT+2. La indicació inicial
+   de reinici a mitjanit era una observació comunicada, no una verificació
+   del límit de dia de l'API. Revisió del 2026-10-03: l'hora exacta de
+   reinici no està acreditada; la interfície no la promet. Saldo i
+   estadístiques es presenten com a dades independents, segons Brevo.
 
 La discrepància del Compte 1 ha quedat resolta amb el responsable de la instal·lació: ara els
 enviaments consumeixen crèdits prepagament, que substitueixen els 300
@@ -177,7 +180,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-31 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
+32 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

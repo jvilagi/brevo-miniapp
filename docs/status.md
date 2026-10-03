@@ -1,6 +1,6 @@
 # Estat del projecte
 
-Actualització: 2026-10-02, Europe/Madrid.
+Actualització: 2026-10-03, Europe/Madrid.
 
 ## Implementat
 
@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-31 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+32 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -68,3 +68,16 @@ de producció. Sense CI/CD, monitorització externa ni backups programats.
 El healthcheck valida el servei, no Brevo. La comprovació HTTPS pública
 no fa login ni consulta dades dels comptes. Les revisions de secrets són
 dirigides; no equivalen a una auditoria externa ni a una garantia absoluta.
+
+## Correcció de la presentació del saldo Free
+
+2026-10-03: eliminada l'afirmació de reinici a les 00:00 GMT+2. La
+documentació oficial confirma el reinici diari però no n'especifica
+l'hora. El saldo disponible es presenta segons Brevo, independentment
+del dia de les estadístiques SMTP; no es força a 300 ni es recalcula.
+La causa exacta d'un desfasament puntual no s'ha acreditat.
+Afegida una prova de presentació i un cas de navegador amb zero
+sol·licituds SMTP i saldo Free inferior al límit, amb dades sintètiques.
+32 proves, tipus, compilació, separació de secrets i comprovacions Chrome
+UI/PWA superades; captura mòbil revisada. Publicació i desplegament
+d'aquesta correcció pendents a continuació.

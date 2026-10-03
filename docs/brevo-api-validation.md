@@ -18,9 +18,18 @@ la [documentació oficial dels complements](https://help.brevo.com/hc/en-us/arti
 Un saldo prepagament zero no acredita per si sol un retorn a Free;
 el backend ha de llegir el règim efectiu en cada actualització.
 
-El fus contrastat als comptes de prova va ser GMT+2 i el reinici a
-mitjanit. És l'origen del valor inicial `Etc/GMT-2`, no una regla universal
-per a tots els comptes. Verifica el fus i el pla de la teva instal·lació.
+El fus contrastat a la interfície dels comptes de prova va ser GMT+2.
+És l'origen del valor inicial `Etc/GMT-2`, no una regla universal per a
+tots els comptes. Verifica el fus i el pla de la teva instal·lació.
+
+Revisió del 2026-10-03: l'hora exacta de reinici del saldo Free no està
+verificada. La [documentació oficial del pla Free](https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan)
+confirma el reinici diari, però no n'especifica l'hora ni el fus. El dia
+consultat als informes SMTP i el saldo retornat per l'API de compte no
+s'han d'assumir sincronitzats a mitjanit. La pantalla indica saldo segons
+Brevo, sense prometre una hora ni forçar-lo a 300 perquè avui no hi hagi
+sol·licituds SMTP. Un retard o una diferència d'horari són hipòtesis,
+no causes acreditades retrospectivament.
 
 ## Estadístiques
 
