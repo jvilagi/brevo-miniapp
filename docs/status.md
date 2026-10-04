@@ -123,7 +123,7 @@ No hi ha recuperació de contrasenya oblidada des del navegador.
 
 ## Noms dels comptes i temps des de l'actualització
 
-Implementats localment el 2026-10-04, amb ubicació i estil aprovats:
+Implementats el 2026-10-04, amb ubicació i estil aprovats:
 «Configuració» al costat de «Canvia la contrasenya», dos noms amb desament
 privat al servidor i persistència entre sessions i reinicis. GET/POST
 autenticats, protecció d'origen, validació, permisos restringits i rename
@@ -142,6 +142,21 @@ secrets superats. Chrome UI/PWA verificats amb dades sintètiques: noms,
 errors, cancel·lació, altra sessió, comptador i segon pla, sense regressions
 en accés, gràfic o canvi de contrasenya. Formulari i resum mòbil/escriptori
 revisats visualment, amplades 320–1280 px. Safari/iPhone real pendent.
-Publicació i desplegament aprovats; pendents de les comprovacions
-d'operació. Fins aquí, cap configuració real ni servei de producció
-modificat en aquesta tasca.
+Publicats i desplegats el 2026-10-04 a partir del commit públic `6118195`,
+amb paquet sense canvis locals pendents, SHA-256 verificat i contenidor
+saludable. Versió, imatge i configuració de retorn anteriors conservades.
+La imatge candidata ha carregat la configuració existent a Linux i ha
+provat escriptura/lectura de noms i hash sintètics en un directori temporal
+separat del muntatge privat, sense xarxa. Directori de prova eliminat;
+bootstrap, hash i noms reals intactes. Fitxer de noms encara absent en
+la instància activa: es crearà quan l'usuari els desi des de l'app.
+
+HTTPS verificat amb Chrome mòbil: accés privat, manifest, icones, worker,
+offline i represa. JavaScript i CSS públics idèntics byte a byte als
+compilats verificats. GET i POST de noms sense sessió rebutjats amb `401`
+i `no-store`. La comprovació pública no ha fet login ni consultat dades
+reals. Només el directori privat separat continua sent d'escriptura;
+claus i bootstrap readonly, sistema de fitxers del contenidor readonly.
+Caddy, DNS i serveis aliens no modificats. El reinici revoca les sessions,
+no canvia la contrasenya. Cal una lectura als altres dispositius per veure
+els noms nous; sense push ni sincronització entre múltiples processos.
