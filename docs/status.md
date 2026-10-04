@@ -91,7 +91,7 @@ La comprovació pública no ha fet login ni consultat dades dels comptes.
 
 ## Canvi de contrasenya
 
-Implementat localment el 2026-10-04: opció sota les targetes, només
+Implementat el 2026-10-04: opció sota les targetes, només
 després d'entrar, amb actual/nova/confirmació i cancel·lació. Sessió,
 origen, límits d'intents i contrasenya actual comprovats al backend.
 Hash scrypt persistent en un directori privat separat d'escriptura;
@@ -103,5 +103,20 @@ preval en reiniciar; un fitxer existent invàlid no activa el bootstrap.
 secrets superats. Chrome UI/PWA verificats amb contrasenyes sintètiques,
 inclòs el formulari 320–1280 px i tancament d'una altra sessió. Captura
 del formulari revisada visualment. La contrasenya real no ha canviat.
-Publicació i desplegament aprovats; pendents de les verificacions
-d'operació. No hi ha recuperació de contrasenya oblidada des del navegador.
+Publicat i desplegat el 2026-10-04 a partir del commit públic `5e893a7`,
+amb paquet sense canvis locals pendents, SHA-256 verificat i contenidor
+saludable. Versió, imatge i configuració anteriors conservades. Creat
+el directori privat buit del hash, amb permisos i propietari restringits;
+només aquest muntatge és d'escriptura, claus i bootstrap readonly.
+Desament atòmic i lectura persistent provats a Linux amb hash sintètic
+en un directori temporal separat, eliminat després de la comprovació.
+Bootstrap intacte i fitxer de contrasenya real encara absent.
+
+HTTPS verificat amb Chrome mòbil: accés privat, manifest, icones, worker,
+offline i represa. JavaScript i CSS públics idèntics byte a byte als
+compilats verificats. Endpoint de canvi sense sessió rebutjat amb `401`
+i `no-store`. La comprovació pública no ha fet login ni consultat dades
+reals. Caddy, DNS i serveis aliens no modificats. El reinici revoca les
+sessions, no la contrasenya. Després d'un canvi no s'ha de tornar a una
+versió que ignori el hash persistent; vegeu `deploy/README.md`.
+No hi ha recuperació de contrasenya oblidada des del navegador.
