@@ -19,6 +19,8 @@ Exemple de disposició, fora del checkout de les versions:
     auth.env      0600, hash i secret de sessió
     runtime.env   0600, origen/fus/noms
     compose.env   0600, directori privat i identificador de versió
+    access/       0700, propietari uid 1000, muntatge separat d'escriptura
+      password.json  0600, hash actual després d'un canvi des de l'app
   caddy/site.conf
 ```
 
@@ -27,6 +29,13 @@ Transfereix els fitxers privats per un canal segur amb permisos restringits;
 mai dins d'un release, commit, arxiu de distribució o imatge.
 El contenidor utilitza uid 1000; ajusta la propietat dels fitxers al teu
 servidor. El carregador rebutja permisos accessibles a altres usuaris.
+
+Crea també el directori buit `private/access/`, propietari uid 1000 i
+permisos `0700`, abans de fer `up`. Compose no el crea automàticament.
+Només aquest directori té muntatge d'escriptura a `/run/private-auth`;
+`accounts.env` i `auth.env` continuen en només lectura i el sistema de
+fitxers del contenidor segueix readonly. `AUTH_PASSWORD_FILE` apunta al
+hash persistent d'aquest directori. No copiïs un hash canviat al release.
 
 Copia `runtime.env.example` fora del checkout com a `private/runtime.env`:
 defineix **el teu** `PUBLIC_ORIGIN=https://el-teu-domini` sense barra final,
@@ -111,6 +120,12 @@ amb el Compose anterior. Un cop saludable, restaura l'enllaç i, si cal,
 el vhost previ validat. Repetir HTTPS i login. No canviïs secrets per
 fer rollback ni eliminis imatges o carpetes alienes. Procediment documentat,
 no simulat com a fallada de producció.
+
+Després d'un canvi de contrasenya des de l'app, no tornis directament a
+una versió anterior a aquesta funcionalitat: ignoraria `password.json`
+i recuperaria l'accés inicial. Conserva el directori d'accés entre
+versions i usa només versions compatibles, o prepara una migració
+administrativa privada revisada abans de fer el retorn.
 
 Per rotar claus, guarda una còpia privada, substitueix la credencial al
 fitxer privat i recrea el servei amb `--force-recreate --wait` (els mounts

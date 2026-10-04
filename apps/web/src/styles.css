@@ -28,6 +28,10 @@ h1, h2, h3, p { margin: 0; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 26px; border-bottom: 1px solid var(--border); }
 .quiet-button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: var(--muted); min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 13px; }
 .quiet-button:hover { background: var(--neutral); color: var(--ink); }
+.password-settings { margin: 8px auto 20px; color: var(--lavender); }
+.password-card form label:not(:first-child) { margin-top: 18px; }
+.password-card #password-guidance { margin-top: 8px; }
+.password-card .password-cancel { width: 100%; margin-top: 8px; }
 .dashboard-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 42px 0 24px; }
 .dashboard-intro h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 650; letter-spacing: -1.8px; line-height: 1.15; margin-top: 7px; }
 .heading-dot { color: var(--lavender); }

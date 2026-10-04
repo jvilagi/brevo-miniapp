@@ -1,6 +1,6 @@
 # Estat del projecte
 
-Actualització: 2026-10-03, Europe/Madrid.
+Actualització: 2026-10-04, Europe/Madrid.
 
 ## Implementat
 
@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-32 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+38 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -88,3 +88,20 @@ HTTPS comprovat amb Chrome mòbil, API sense sessió `401`, `no-store`,
 worker, offline i represa. El JavaScript públic coincideix byte a byte
 amb el compilat verificat i ja no inclou l'afirmació de reinici a mitjanit.
 La comprovació pública no ha fet login ni consultat dades dels comptes.
+
+## Canvi de contrasenya
+
+Implementat localment el 2026-10-04: opció sota les targetes, només
+després d'entrar, amb actual/nova/confirmació i cancel·lació. Sessió,
+origen, límits d'intents i contrasenya actual comprovats al backend.
+Hash scrypt persistent en un directori privat separat d'escriptura;
+claus Brevo i bootstrap continuen readonly. Èxit revoca totes les
+sessions; fallada de desament conserva l'accés anterior. L'hash nou
+preval en reiniciar; un fitxer existent invàlid no activa el bootstrap.
+
+38 proves (33 API + 5 presentació), tipus, compilació i separació de
+secrets superats. Chrome UI/PWA verificats amb contrasenyes sintètiques,
+inclòs el formulari 320–1280 px i tancament d'una altra sessió. Captura
+del formulari revisada visualment. La contrasenya real no ha canviat.
+Publicació i desplegament aprovats; pendents de les verificacions
+d'operació. No hi ha recuperació de contrasenya oblidada des del navegador.

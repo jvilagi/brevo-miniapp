@@ -51,6 +51,9 @@ han de viure fora del codi i de la imatge Docker.
 - React + TypeScript + Vite; Node.js 24 + Fastify; contractes compartits.
 - Accés privat amb scrypt, sessions HttpOnly, límits d'intents i logout.
   Reiniciar el backend revoca les sessions; no hi ha base de dades.
+  Després d'entrar, «Canvia la contrasenya» demana l'actual i la nova
+  dues vegades. El canvi persistent tanca totes les sessions. No és
+  una recuperació de contrasenya oblidada; vegeu la guia d'instal·lació.
 - Memòria cau de dades de 60 segons al servidor; errors parcials i dades
   antigues identificades, fins a 15 minuts. Una dada absent no és zero.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
@@ -72,7 +75,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 32 proves (27 API + 5 presentació), compilació i separació
+Comprova tipus, 38 proves (33 API + 5 presentació), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

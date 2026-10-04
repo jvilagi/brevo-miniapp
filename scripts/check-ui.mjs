@@ -37,7 +37,8 @@ function contrast(a, b) {
 }
 async function verify(browserType, label, executablePath) {
   const testConfig = { ...config };
-  const app = await buildApp({ serveWeb: true, privateConfig: testConfig, accountsService: { async snapshot() { return structuredClone(fixture); } } });
+  const app = await buildApp({ serveWeb: true, privateConfig: testConfig, passwordWriter: async () => {},
+    accountsService: { async snapshot() { return structuredClone(fixture); } } });
   const base = await app.listen({ host: '127.0.0.1', port: 0 }); testConfig.origin = base;
   const errors = [];
   let browser;
@@ -139,12 +140,48 @@ async function verify(browserType, label, executablePath) {
     await page.unroute('**/api/accounts');
     await page.getByLabel('Contrasenya').fill(password); await page.getByRole('button', { name: 'Entra a la MiniApp' }).click();
     await page.locator('.account-card.account-1').waitFor();
+    await page.getByRole('button', { name: 'Canvia la contrasenya', exact: true }).click();
+    await page.getByRole('heading', { name: 'Canvia la contrasenya', exact: true }).waitFor();
+    const nextPassword = 'synthetic-ui-new-password-only';
+    await page.getByLabel('Contrasenya actual', { exact: true }).fill(password);
+    await page.getByLabel('Contrasenya nova', { exact: true }).fill(nextPassword);
+    await page.getByLabel('Confirma la contrasenya nova', { exact: true }).fill('different-synthetic-password');
+    let passwordCalls = 0;
+    await page.route('**/api/auth/password', async (route) => { passwordCalls++; await route.continue(); });
+    await page.getByRole('button', { name: 'Desa la contrasenya', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'no coincideixen' }).waitFor(); assert.equal(passwordCalls, 0);
+    await page.getByRole('button', { name: 'Cancel·la', exact: true }).click();
+    await page.getByRole('button', { name: 'Canvia la contrasenya', exact: true }).click();
+    for (const input of await page.locator('.password-card input').all()) assert.equal(await input.inputValue(), '');
+    for (const width of [320, 375, 390, 430, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(page); }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: join(directory, `${label}-password.png`), fullPage: true });
+    await page.getByLabel('Contrasenya actual', { exact: true }).fill('wrong');
+    await page.getByLabel('Contrasenya nova', { exact: true }).fill(nextPassword);
+    await page.getByLabel('Confirma la contrasenya nova', { exact: true }).fill(nextPassword);
+    await page.getByRole('button', { name: 'Desa la contrasenya', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'actual no és correcta' }).waitFor();
+    for (const input of await page.locator('.password-card input').all()) assert.equal(await input.inputValue(), '');
+    const other = await browser.newContext();
+    assert.equal((await other.request.post(`${base}/api/auth/login`, { headers: { origin: base, 'x-app-request': '1' }, data: { password } })).status(), 200);
+    await page.getByLabel('Contrasenya actual', { exact: true }).fill(password);
+    await page.getByLabel('Contrasenya nova', { exact: true }).fill(nextPassword);
+    await page.getByLabel('Confirma la contrasenya nova', { exact: true }).fill(nextPassword);
+    await page.getByRole('button', { name: 'Desa la contrasenya', exact: true }).click();
+    await page.getByRole('heading', { name: 'Benvingut' }).waitFor();
+    await page.getByRole('status').filter({ hasText: 'Contrasenya actualitzada' }).waitFor();
+    assert.equal(await page.locator('.account-card').count(), 0);
+    assert.equal((await other.request.get(`${base}/api/accounts`)).status(), 401); await other.close();
+    assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
+    await page.unroute('**/api/auth/password');
+    await page.getByLabel('Contrasenya').fill(nextPassword); await page.getByRole('button', { name: 'Entra a la MiniApp' }).click();
+    await page.locator('.account-card.account-1').waitFor();
     await page.getByRole('button', { name: 'Tanca la sessió' }).click();
     await page.getByRole('heading', { name: 'Benvingut' }).waitFor();
     const unauthorized = await context.request.get(`${base}/api/accounts`); assert.equal(unauthorized.status(), 401);
     assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
     assert.deepEqual(errors, []);
-    await context.close(); console.log(`${label}: accés, dades, gràfic, errors, sessió i amplades 320–1280 correctes.`);
+    await context.close(); console.log(`${label}: accés, dades, gràfic, errors, canvi de contrasenya, sessions i amplades 320–1280 correctes.`);
   } finally { await browser?.close(); await app.close(); }
 }
 const engines = (process.env['UI_BROWSERS'] ?? 'chromium').split(',');

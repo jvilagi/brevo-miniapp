@@ -4,9 +4,10 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ApiError, SessionResponse } from '@brevo-miniapp/contracts';
 import type { AuthConfig } from './private-config.js';
-import { verifyPassword } from './password.js';
+import { hashPassword, verifyPassword } from './password.js';
 
-export async function registerAuth(app: FastifyInstance, config: { auth: AuthConfig | null; origin: string; production: boolean }) {
+export async function registerAuth(app: FastifyInstance, config: { auth: AuthConfig | null; origin: string; production: boolean },
+  passwordWriter?: (hash: string) => Promise<void>) {
   await app.register(cookie, config.auth ? { secret: config.auth.sessionSecret } : {});
   await app.register(rateLimit, { global: false, max: 60, timeWindow: '1 minute' });
   const name = config.production ? '__Host-brevo-session' : 'brevo-session';
@@ -40,6 +41,9 @@ export async function registerAuth(app: FastifyInstance, config: { auth: AuthCon
   let concurrentChecks = 0;
   let windowStart = Date.now();
   let attempts = 0;
+  let passwordHash = config.auth?.passwordHash;
+  let changing = false;
+  let revision = 0;
   app.post<{ Body: { password: string } }>('/api/auth/login', {
     config: { rateLimit: { max: 5, timeWindow: '15 minutes' } }, onRequest: sameOrigin,
     schema: { body: { type: 'object', required: ['password'], additionalProperties: false,
@@ -47,11 +51,13 @@ export async function registerAuth(app: FastifyInstance, config: { auth: AuthCon
   }, async (request, reply) => {
     if (!config.auth) return reply.code(503).send({ error: 'AUTH_NOT_CONFIGURED' } satisfies ApiError);
     if (Date.now() - windowStart >= 15 * 60_000) { windowStart = Date.now(); attempts = 0; }
-    if (++attempts > 30 || concurrentChecks >= 2) return reply.code(429).send({ error: 'RATE_LIMITED' } satisfies ApiError);
+    if (++attempts > 30 || concurrentChecks >= 2 || changing) return reply.code(429).send({ error: 'RATE_LIMITED' } satisfies ApiError);
     concurrentChecks++;
     let valid;
-    try { valid = await verifyPassword(request.body.password, config.auth.passwordHash); }
+    const checkedRevision = revision;
+    try { valid = await verifyPassword(request.body.password, passwordHash!); }
     finally { concurrentChecks--; }
+    if (checkedRevision !== revision || changing) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
     if (!valid) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
     const previous = sessionId(request);
     if (previous) sessions.delete(previous);
@@ -67,6 +73,38 @@ export async function registerAuth(app: FastifyInstance, config: { auth: AuthCon
     if (id) sessions.delete(id);
     reply.clearCookie(name, settings);
     return { authenticated: false, configured: config.auth !== null } satisfies SessionResponse;
+  });
+  app.post<{ Body: { currentPassword: string; newPassword: string; confirmation: string } }>('/api/auth/password', {
+    config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    onRequest: [sameOrigin, async (request, reply) => {
+      if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
+    }],
+    schema: { body: { type: 'object', required: ['currentPassword', 'newPassword', 'confirmation'], additionalProperties: false,
+      properties: {
+        currentPassword: { type: 'string', minLength: 1, maxLength: 256 },
+        newPassword: { type: 'string', minLength: 12, maxLength: 256 },
+        confirmation: { type: 'string', minLength: 12, maxLength: 256 },
+      } } },
+  }, async (request, reply) => {
+    if (!passwordWriter) return reply.code(503).send({ error: 'PASSWORD_CHANGE_UNAVAILABLE' } satisfies ApiError);
+    if (request.body.newPassword !== request.body.confirmation || request.body.newPassword === request.body.currentPassword) {
+      return reply.code(400).send({ error: 'BAD_REQUEST' } satisfies ApiError);
+    }
+    if (Date.now() - windowStart >= 15 * 60_000) { windowStart = Date.now(); attempts = 0; }
+    if (++attempts > 30 || concurrentChecks >= 2 || changing) return reply.code(429).send({ error: 'RATE_LIMITED' } satisfies ApiError);
+    changing = true; concurrentChecks++;
+    try {
+      if (!await verifyPassword(request.body.currentPassword, passwordHash!)) {
+        return reply.code(400).send({ error: 'CURRENT_PASSWORD_INCORRECT' } satisfies ApiError);
+      }
+      if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
+      const next = await hashPassword(request.body.newPassword);
+      if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
+      await passwordWriter(next);
+      passwordHash = next; revision++; sessions.clear();
+      reply.clearCookie(name, settings);
+      return { authenticated: false, configured: true } satisfies SessionResponse;
+    } finally { changing = false; concurrentChecks--; }
   });
   return authenticated;
 }

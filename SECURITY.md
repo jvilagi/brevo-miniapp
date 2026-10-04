@@ -19,3 +19,9 @@ logs i artefactes. No reutilitzis els secrets compromesos.
 Producció requereix HTTPS, origen explícit i accés privat. No utilitzis
 el servidor de desenvolupament com a servei públic. Els fitxers privats
 requereixen permisos restringits; el worker només desa recursos estàtics.
+
+Els canvis de contrasenya requereixen sessió i contrasenya actual, amb
+protecció d'origen i límit d'intents. `access/password.json` és també
+privat: conté el hash actual i preval sobre l'inicial. Protegeix-lo en
+còpies de seguretat, exclusions i retorns de versió. No té contrasenya
+en text pla. No hi ha recuperació pública, MFA ni rèpliques coordinades.

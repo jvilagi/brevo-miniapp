@@ -55,6 +55,9 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 ## Flux implementat
 
 - Comprovació de sessió, pantalla de contrasenya i errors d'accés.
+- Opció «Canvia la contrasenya» sota les targetes, només després d'entrar,
+  amb ubicació i disseny actual aprovats el 2026-10-04. Formulari d'actual,
+  nova i confirmació; cancel·lació, errors i retorn a login en desar.
 - Login simplificat a petició d'en Jordi: retirats l'eslògan, el titular
   de presentació, la descripció i les etiquetes «2 comptes», «7 dies
   d'activitat» i «Només consulta». Formulari centrat en una sola columna,
@@ -116,6 +119,9 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
   desplegables, selector de període, lectura de valors únics de l'agregat,
   selecció del gràfic, valors desconeguts, error de xarxa, error parcial,
   sessió caducada simulada, logout i absència d'emmagatzematge persistent.
+- Canvi de contrasenya amb dades sintètiques: confirmació incorrecta sense
+  petició, cancel·lació i camps buits en reprendre, actual incorrecta,
+  canvi correcte, revocació d'una altra sessió i login amb la nova.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.

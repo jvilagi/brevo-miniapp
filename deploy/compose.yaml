@@ -26,11 +26,17 @@ services:
       PORT: "3000"
       BREVO_SECRETS_FILE: /run/secrets/brevo-accounts.env
       AUTH_SECRETS_FILE: /run/secrets/brevo-auth.env
+      AUTH_PASSWORD_FILE: /run/private-auth/password.json
     volumes:
       - type: bind
         source: ${BREVO_PRIVATE_DIR}/accounts.env
         target: /run/secrets/brevo-accounts.env
         read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${BREVO_PRIVATE_DIR}/access
+        target: /run/private-auth
+        read_only: false
         bind: { create_host_path: false }
       - type: bind
         source: ${BREVO_PRIVATE_DIR}/auth.env

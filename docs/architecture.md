@@ -43,7 +43,8 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 27 proves d'accés privat, sessions, límits d'intents, errors públics,
+Hi ha 33 proves d'accés privat, sessions, canvi persistent de contrasenya,
+límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
@@ -61,6 +62,13 @@ Les sessions viuen en memòria i es revoquen en reiniciar, amb caducitat
 de set dies; la cookie és HttpOnly, SameSite Strict i Secure a producció.
 Els POST d'accés validen origen i capçalera pròpia. El backend no confia
 en capçaleres proxy fins que es defineixi la topologia de desplegament.
+
+Canvi des de l'app autenticada: exigeix contrasenya actual i confirmació
+de la nova, desa només un hash scrypt persistent en un directori privat
+separat i revoca totes les sessions després de desar-lo. El hash nou té
+prioritat sobre el bootstrap d'`auth.env`, també en reiniciar. El muntatge
+d'escriptura de Docker només cobreix aquest directori; claus Brevo i
+configuració inicial continuen readonly. No hi ha recuperació pública.
 
 La cache dura 60 segons. En error, cada secció independent pot conservar
 dades antigues fins a 15 minuts, amb estat i timestamp original; després
@@ -180,7 +188,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-32 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
+38 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

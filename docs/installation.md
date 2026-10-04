@@ -94,6 +94,31 @@ privat i no es comparteix amb GitHub.
 Si `auth.env` ja existeix, la comanda no el sobreescriu: continua amb la
 contrasenya existent. No cal executar-la a cada arrencada.
 
+### Canviar-la des de l'app
+
+Entra i prem **Canvia la contrasenya**, sota les targetes. Introdueix
+l'actual, la nova (12–256 caràcters) i la confirmació. Després de desar-la,
+totes les sessions es tanquen i cal entrar amb la nova.
+
+El backend desa només un hash scrypt en `access/password.json`, al costat
+del fitxer privat `auth.env`: directori `0700` i fitxer `0600`, fora del
+checkout. Aquest hash té prioritat sobre l'inicial d'`auth.env` o de
+`APP_PASSWORD_HASH`, també després de reiniciar. No es modifiquen les claus
+Brevo ni el secret de sessió. El directori ha de ser escrivible pel backend.
+`AUTH_PASSWORD_FILE` permet una altra ruta absoluta privada; no col·loquis
+el fitxer en una carpeta compartida o dins del repositori.
+
+Si el fitxer existent és invàlid o té permisos insegurs, l'arrencada falla:
+no torna silenciosament a la contrasenya inicial. No es desa contrasenya
+en text pla ni dades d'accés en la cache PWA o localStorage/sessionStorage.
+
+No hi ha «He oblidat la contrasenya» públic. Si no recordes l'actual,
+necessites una recuperació administrativa privada al servidor. Cal
+tractar també el hash d'`access/password.json`, que té prioritat:
+canviar només `auth.env` no restableix una contrasenya canviada des de l'app.
+No s'inclou un reset automatitzat. Conserva còpies privades i revisa el
+procediment abans de substituir configuració o eliminar fitxers.
+
 ## 5. Iniciar i comprovar l'app
 
 ```bash
@@ -133,7 +158,7 @@ No és necessari imprimir cap clau ni la resposta completa de Brevo.
 - **Noms dels comptes:** opcionalment, inicia amb
   `BREVO_ACCOUNT_1_NAME="Personal" BREVO_ACCOUNT_2_NAME="Altres" npm run dev`.
   Són noms, no secrets. El backend no llegeix els noms d'`accounts.env`.
-- **Altres ubicacions:** `BREVO_SECRETS_FILE` i `AUTH_SECRETS_FILE`
+- **Altres ubicacions:** `BREVO_SECRETS_FILE`, `AUTH_SECRETS_FILE` i `AUTH_PASSWORD_FILE`
   permeten camins absoluts privats fora del checkout. `setup:auth` sempre
   crea el seu fitxer a la ubicació per defecte; no segueix aquestes opcions.
 

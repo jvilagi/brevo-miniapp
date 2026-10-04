@@ -7,12 +7,14 @@ import type { ApiError, HealthResponse } from '@brevo-miniapp/contracts';
 import type { PrivateConfig } from './private-config.js';
 import { registerAuth } from './auth.js';
 import type { AccountsService } from './brevo.js';
+import { savePassword } from './password-store.js';
 
 export interface AppOptions {
   serveWeb?: boolean;
   webRoot?: string;
   privateConfig?: PrivateConfig;
   accountsService?: Pick<AccountsService, 'snapshot'>;
+  passwordWriter?: (hash: string) => Promise<void>;
 }
 
 export async function buildApp(options: AppOptions = {}) {
@@ -30,9 +32,12 @@ export async function buildApp(options: AppOptions = {}) {
     status: 'ok', service: 'brevo-miniapp',
   }));
 
-  const authenticated = await registerAuth(app, options.privateConfig ?? {
+  const privateConfig = options.privateConfig ?? {
     auth: null, origin: 'http://127.0.0.1:5174', production: false,
-  });
+  };
+  const passwordFile = options.privateConfig?.passwordFile;
+  const authenticated = await registerAuth(app, privateConfig,
+    options.passwordWriter ?? (passwordFile ? (hash) => savePassword(passwordFile, hash) : undefined));
   app.all('/api/accounts', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (request, reply) => {
     if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
     if (request.method !== 'GET') return reply.code(404).send({ error: 'NOT_FOUND' } satisfies ApiError);

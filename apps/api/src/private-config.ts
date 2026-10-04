@@ -1,9 +1,10 @@
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { isAbsolute, join, relative } from 'node:path';
+import { dirname, isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 import { validPasswordHash } from './password.js';
+import { readStoredPassword } from './password-store.js';
 
 export interface AuthConfig { passwordHash: string; sessionSecret: string }
 export interface AccountConfig { id: '1' | '2'; name: string; apiKey: string | null }
@@ -13,6 +14,7 @@ export interface PrivateConfig {
   origin: string;
   timezone: string;
   production: boolean;
+  passwordFile?: string;
 }
 
 export async function readPrivateEnv(path: string, optional = false): Promise<NodeJS.ProcessEnv> {
@@ -34,12 +36,15 @@ export async function readPrivateEnv(path: string, optional = false): Promise<No
 export async function loadPrivateConfig(env: NodeJS.ProcessEnv = process.env): Promise<PrivateConfig> {
   const directory = join(homedir(), '.config', 'brevo-miniapp');
   const accountsEnv = await readPrivateEnv(env['BREVO_SECRETS_FILE'] ?? join(directory, 'accounts.env'), !env['BREVO_SECRETS_FILE']);
-  const authEnv = await readPrivateEnv(env['AUTH_SECRETS_FILE'] ?? join(directory, 'auth.env'), !env['AUTH_SECRETS_FILE']);
-  const passwordHash = env['APP_PASSWORD_HASH'] ?? authEnv['APP_PASSWORD_HASH'];
+  const authFile = env['AUTH_SECRETS_FILE'] ?? join(directory, 'auth.env');
+  const authEnv = await readPrivateEnv(authFile, !env['AUTH_SECRETS_FILE']);
+  let passwordHash = env['APP_PASSWORD_HASH'] ?? authEnv['APP_PASSWORD_HASH'];
   const sessionSecret = env['SESSION_SECRET'] ?? authEnv['SESSION_SECRET'];
   if ((passwordHash || sessionSecret) && (!passwordHash || !validPasswordHash(passwordHash) || !sessionSecret || sessionSecret.length < 43)) {
     throw new Error('Configuració d’accés privat incompleta o invàlida.');
   }
+  const passwordFile = env['AUTH_PASSWORD_FILE'] ?? join(dirname(authFile), 'access', 'password.json');
+  if (passwordHash) passwordHash = await readStoredPassword(passwordFile) ?? passwordHash;
   const production = env['NODE_ENV'] === 'production';
   if (production && !env['PUBLIC_ORIGIN']) throw new Error('Cal definir PUBLIC_ORIGIN amb el teu origen HTTPS.');
   const origin = env['PUBLIC_ORIGIN'] ?? 'http://127.0.0.1:5174';
@@ -57,6 +62,6 @@ export async function loadPrivateConfig(env: NodeJS.ProcessEnv = process.env): P
     accounts: (['1', '2'] as const).map((id) => ({ id,
       name: (env[`BREVO_ACCOUNT_${id}_NAME`] ?? `Compte ${id}`).slice(0, 100),
       apiKey: env[`BREVO_ACCOUNT_${id}_API_KEY`] ?? accountsEnv[`BREVO_ACCOUNT_${id}_API_KEY`] ?? null,
-    })), origin, timezone, production,
+    })), origin, timezone, production, passwordFile,
   };
 }

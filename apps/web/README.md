@@ -19,6 +19,11 @@ peticions en ocultar la pàgina i es refresca en reprendre-la quan han
 passat 60 segons, o amb el botó Actualitza. En error es mantenen dades
 antigues identificades; una sessió `401` elimina les dades de pantalla.
 
+«Canvia la contrasenya», sota les targetes autenticades, obre un formulari
+amb actual/nova/confirmació. Cancel·lar el desmunta; els camps s'esborren
+abans d'enviar-los. Èxit esborra el tauler i torna a login, perquè totes
+les sessions s'han revocat. No és una recuperació de contrasenya oblidada.
+
 `pwa-plugin.ts` genera una versió de cache a partir dels recursos compilats.
 El worker només precacheja la llista explícita d'estàtics, amb credencials
 omeses. No desa peticions ni respostes `/api/`, POST, altres orígens,

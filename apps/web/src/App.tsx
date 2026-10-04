@@ -5,6 +5,7 @@ import { AccountCard } from './AccountCard';
 import { Icon } from './icons';
 import { PwaControls } from './PwaControls';
 import { updatedLabel, zoneLabel } from './presentation';
+import { ChangePassword } from './ChangePassword';
 
 function Brand() {
   return <div className="brand"><img className="brand-symbol" src="/brand/miniapp-mark.svg" alt="" width="36" height="36"/><span className="brand-name">MiniApp<span className="brand-caption">per a Brevo</span></span></div>;
@@ -55,6 +56,7 @@ export function App() {
   const lastRead = useRef(0);
   const epoch = useRef(0);
   const [retry, setRetry] = useState(0);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController(); setSessionError(false);
@@ -73,7 +75,7 @@ export function App() {
     } catch (failure) {
       if (controller.signal.aborted || epoch.current !== requestEpoch) return;
       if (failure instanceof api.ApiFailure && failure.status === 401) {
-        setData(null); setAuth({ authenticated: false, configured: true }); setSessionMessage('La teva sessió ha caducat. Torna a entrar.');
+        setData(null); setChangingPassword(false); setAuth({ authenticated: false, configured: true }); setSessionMessage('La teva sessió ha caducat. Torna a entrar.');
       } else setError(failure instanceof api.ApiFailure && failure.status === 429 ? 'Massa consultes seguides. Espera un minut i torna-ho a provar.' : 'No s’han pogut actualitzar les dades. Els valors anteriors poden haver canviat.');
     } finally {
       if (inFlight.current === controller) { inFlight.current = null; setLoading(false); }
@@ -100,8 +102,18 @@ export function App() {
     } catch { setError('No s’ha pogut tancar la sessió al servidor. Comprova la connexió i torna-ho a provar.'); }
     finally { setLeaving(false); setLoading(false); }
   }
+  function endSession(message: string) {
+    epoch.current++; inFlight.current?.abort(); inFlight.current = null; lastRead.current = 0;
+    setData(null); setError(null); setLoading(false); setChangingPassword(false);
+    setAuth({ authenticated: false, configured: true }); setSessionMessage(message);
+  }
   if (!auth) return <main className="connection-screen"><Brand/>{sessionError ? <><h1>No podem connectar</h1><p>Comprova la connexió amb el servidor.</p><button className="primary-button" onClick={() => setRetry(retry + 1)}>Torna-ho a provar</button></> : <p role="status">Preparant la teva MiniApp…</p>}</main>;
   if (!auth.authenticated) return <Login configured={auth.configured} message={sessionMessage} onLogin={() => { setAuth({ authenticated: true, configured: true }); setSessionMessage(null); }}/>;
+  if (changingPassword) return <div className="login-shell"><header><Brand/><span className="private-label"><Icon name="lock"/>Accés privat</span></header>
+    <main className="login-main"><ChangePassword onCancel={() => setChangingPassword(false)}
+      onDone={() => endSession('Contrasenya actualitzada. Totes les sessions s’han tancat. Entra amb la nova contrasenya.')}
+      onExpired={() => endSession('La teva sessió ha caducat. Torna a entrar.')}/></main>
+    <footer>Brevo MiniApp · Accés privat</footer></div>;
   const timezone = data?.accounts[0]?.smtp.period.timezone ?? 'Etc/GMT-2';
   const hasOld = data?.accounts.some((account) => [account.quota, account.smtp.today.report, account.smtp.totals, account.smtp.daily, account.marketing.campaigns].some((section) => section.status !== 'fresh'));
   return <div className="dashboard-shell"><a className="skip-link" href="#accounts">Ves als comptes</a>
@@ -116,6 +128,7 @@ export function App() {
         {data ? data.accounts.map((account) => <AccountCard key={account.id} account={account} locallyStale={Boolean(error || offline)}/>) : loading ? [1, 2].map((id) => <div key={id} className="account-card skeleton" aria-hidden="true"><div/><div/><div/></div>) :
           <div className="empty-state"><h2>No s’han carregat els comptes</h2><p>Pots tornar-ho a provar amb el botó Actualitza.</p></div>}
       </section><aside className="dashboard-footnote"><Icon name="lock"/><p>Només consulta. El saldo el proporciona Brevo; mai es calcula restant els enviaments d’avui.</p></aside>
+      <button className="quiet-button password-settings" type="button" disabled={leaving} onClick={() => setChangingPassword(true)}><Icon name="lock"/>Canvia la contrasenya</button>
     </main><PwaControls/><footer>Brevo MiniApp <span>·</span> La teva vista privada <span>·</span> No és una app oficial de Brevo</footer>
   </div>;
 }

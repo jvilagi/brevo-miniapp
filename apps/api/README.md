@@ -20,6 +20,11 @@ consum ni activen Free quan s'esgota un saldo prepagament.
 - `POST /api/auth/login`: cos JSON `{ "password": "…" }`; contrasenya
   comprovada amb scrypt (`N=32768`, `r=8`, `p=3`, sal aleatòria).
 - `POST /api/auth/logout`: revoca la sessió i esborra la cookie.
+- `POST /api/auth/password`: sessió activa i JSON amb `currentPassword`,
+  `newPassword`, `confirmation`. Comprova l'actual i 12–256 caràcters per
+  la nova, que ha de ser diferent i coincidir amb la confirmació. Desa el
+  hash abans de canviar l'estat en memòria; èxit revoca totes les sessions.
+  Error d'escriptura conserva contrasenya i sessions; mai exposa el camí.
 - Els POST d'accés exigeixen `Origin` igual a `PUBLIC_ORIGIN` i
   `X-App-Request: 1`. No hi ha CORS ni confiança en l'Host del client.
 - Cookie HttpOnly, SameSite Strict, caducitat absoluta de set dies,
@@ -28,11 +33,25 @@ consum ni activen Free quan s'esgota un saldo prepagament.
   l'anterior sessió; reiniciar revoca totes les sessions (sense BD).
 - Login: màxim 5 peticions per IP en 15 minuts, 30 comprovacions globals
   per 15 minuts i 2 comprovacions scrypt simultànies. Màxim 200 sessions.
+- Canvi: màxim 5 peticions per IP en 15 minuts; comparteix el límit global
+  i de concurrència amb login. Només un canvi alhora; el login en curs
+  no pot crear una sessió basada en la contrasenya anterior després del canvi.
 - Comptes: màxim 60 consultes per IP i minut. `trustProxy` desactivat:
   darrere Caddy, els clients comparteixen el límit del proxy fins a
   definir una topologia de confiança segura en el desplegament.
 - Sense `auth.env` en desenvolupament, login retorna `503` i comptes
   `401`. La comanda `npm run setup:auth` configura l'accés localment.
+
+`AUTH_PASSWORD_FILE` (per defecte `access/password.json` al costat
+d'`auth.env`) té prioritat sobre el hash inicial. Escriptura temporal
+exclusiva `0600`, sync i substitució per rename dins del directori privat
+`0700`, fora del checkout. Es rebutgen enllaços, permisos oberts o hashes
+invàlids; un fitxer existent invàlid impedeix l'arrencada. No es toca el
+secret de sessió ni `auth.env`. El disseny és per a un sol procés backend,
+no per a rèpliques múltiples ni edicions externes concurrents del hash.
+Si no hi ha escriptura configurada, el canvi retorna `503`.
+
+Referència de seguretat: [OWASP, canvi de contrasenya](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#change-password-feature).
 
 ## Dades Brevo
 

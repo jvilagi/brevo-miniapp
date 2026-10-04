@@ -9,6 +9,9 @@ accounts.env
 auth.env
 runtime.env
 compose.env
+password.json
+access/
+.password-*.tmp
 *.pem
 *.key
 *.p12
