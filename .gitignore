@@ -10,8 +10,10 @@ auth.env
 runtime.env
 compose.env
 password.json
+account-names.json
 access/
 .password-*.tmp
+.private-*.tmp
 *.pem
 *.key
 *.p12

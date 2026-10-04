@@ -142,6 +142,26 @@ La primera resposta ha de tenir `status: "ok"`; la segona ha de mostrar
 cada targeta mostra el saldo i l'activitat del compte que esperes.
 No és necessari imprimir cap clau ni la resposta completa de Brevo.
 
+## Personalitzar els noms
+
+Després d'entrar, prem **Configuració**, al costat de **Canvia la
+contrasenya** sota les targetes. Escriu els dos noms (1–100 caràcters)
+i prem **Desa els noms**. Es comparteixen entre dispositius d'aquesta
+instal·lació, sense canviar el nom dels comptes a Brevo. Cancel·lar
+no desa. Als altres dispositius, prem Actualitza per veure'ls.
+
+Es desen a `access/account-names.json`, per defecte al mateix directori
+que `password.json`, amb permisos `0600` i directori `0700`, fora del
+repositori. `ACCOUNT_NAMES_FILE` permet una ruta absoluta alternativa
+privada. El fitxer desat preval sobre els noms inicials de l'entorn en
+reiniciar. Conserva'l entre versions i en les còpies privades; no editis
+el JSON mentre s'executa el backend. Un fitxer invàlid o amb permisos
+insegurs fa fallar l'arrencada, no restaura noms per defecte.
+
+El comptador d'Actualitza indica el temps des de la consulta correcta,
+no l'edat de cada dada de Brevo. Les dates i avisos de cada secció
+continuen sent la referència per a dades antigues o en cache.
+
 ## Opcions i errors habituals
 
 - **Fitxer privat invàlid:** comprova ubicació fora del repositori,
@@ -155,10 +175,11 @@ No és necessari imprimir cap clau ni la resposta completa de Brevo.
 - **Fus horari:** el valor inicial `Etc/GMT-2` representa GMT+2 fix,
   no el canvi d'hora europeu. Verifica el fus dels teus dos comptes.
   L'app utilitza un únic fus configurat per a tots dos.
-- **Noms dels comptes:** opcionalment, inicia amb
+- **Noms inicials dels comptes:** opcionalment, inicia amb
   `BREVO_ACCOUNT_1_NAME="Personal" BREVO_ACCOUNT_2_NAME="Altres" npm run dev`.
   Són noms, no secrets. El backend no llegeix els noms d'`accounts.env`.
-- **Altres ubicacions:** `BREVO_SECRETS_FILE`, `AUTH_SECRETS_FILE` i `AUTH_PASSWORD_FILE`
+  Si s'han desat des de l'app, tenen prioritat sobre aquests noms inicials.
+- **Altres ubicacions:** `BREVO_SECRETS_FILE`, `AUTH_SECRETS_FILE`, `AUTH_PASSWORD_FILE` i `ACCOUNT_NAMES_FILE`
   permeten camins absoluts privats fora del checkout. `setup:auth` sempre
   crea el seu fitxer a la ubicació per defecte; no segueix aquestes opcions.
 

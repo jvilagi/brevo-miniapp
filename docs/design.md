@@ -55,6 +55,12 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 ## Flux implementat
 
 - Comprovació de sessió, pantalla de contrasenya i errors d'accés.
+- «Configuració» al costat de «Canvia la contrasenya», sota les targetes:
+  dos noms editables, desament al servidor, cancel·lació i errors. Ubicació
+  i manteniment de l'estil actual aprovats el 2026-10-04.
+- Comptador discret al costat d'«Actualitza» (a sota al mòbil), amb segons,
+  minuts, hores i dies; sense anuncis cada segon als lectors de pantalla.
+  Mesura l'última consulta correcta, no l'edat de totes les dades Brevo.
 - Opció «Canvia la contrasenya» sota les targetes, només després d'entrar,
   amb ubicació i disseny actual aprovats el 2026-10-04. Formulari d'actual,
   nova i confirmació; cancel·lació, errors i retorn a login en desar.
@@ -100,7 +106,7 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 
 ## Comprovacions
 
-- 5 proves de presentació: format català, desconeguts, Free/prepagament,
+- 6 proves de presentació: temps transcorregut, format català, desconeguts, Free/prepagament,
   saldo sense hora de reinici no verificada, escala i buits del gràfic,
   dades antigues i fus horari.
 - `scripts/check-ui.mjs`: Chrome real en mode headless, context mòbil
@@ -122,6 +128,10 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 - Canvi de contrasenya amb dades sintètiques: confirmació incorrecta sense
   petició, cancel·lació i camps buits en reprendre, actual incorrecta,
   canvi correcte, revocació d'una altra sessió i login amb la nova.
+- Noms amb dades sintètiques: càrrega inicial, cancel·lació, validació,
+  error de desament, títols actualitzats, lectura des d'una altra sessió.
+  Comptador després d'un error, resposta tota antiga, parada en segon pla
+  i recuperació del temps en tornar. Sense polling ni dades persistents.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.

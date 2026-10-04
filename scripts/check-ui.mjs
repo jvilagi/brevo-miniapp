@@ -37,7 +37,7 @@ function contrast(a, b) {
 }
 async function verify(browserType, label, executablePath) {
   const testConfig = { ...config };
-  const app = await buildApp({ serveWeb: true, privateConfig: testConfig, passwordWriter: async () => {},
+  const app = await buildApp({ serveWeb: true, privateConfig: testConfig, passwordWriter: async () => {}, namesWriter: async () => {},
     accountsService: { async snapshot() { return structuredClone(fixture); } } });
   const base = await app.listen({ host: '127.0.0.1', port: 0 }); testConfig.origin = base;
   const errors = [];
@@ -46,6 +46,11 @@ async function verify(browserType, label, executablePath) {
     browser = await browserType.launch(executablePath ? { executablePath, headless: true } : { headless: true });
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => {
+      window.__testNowOffset = 0;
+      const realNow = Date.now.bind(Date);
+      Date.now = () => realNow() + window.__testNowOffset;
+    });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(base); await page.getByRole('heading', { name: 'Benvingut' }).waitFor();
     await page.waitForFunction(() => [...document.querySelectorAll('.brand-symbol')].every((image) => image.complete && image.naturalWidth > 0));
@@ -90,6 +95,54 @@ async function verify(browserType, label, executablePath) {
     assert((await page.locator('.account-2 .account-note').innerText()).includes('hora exacta no està verificada'));
     assert(!(await page.locator('.account-2').innerText()).includes('00:00'));
     assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '8.400');
+    await page.waitForFunction(() => /^Fa \d+ s$/.test(document.querySelector('.refresh-age').textContent));
+    assert.equal(await page.locator('.refresh-age').getAttribute('aria-live'), 'off');
+    // Saltem el rellotge del client sense dormir ni provocar polling.
+    await page.evaluate(() => { window.__testNowOffset = 45000; window.dispatchEvent(new Event('focus')); });
+    await page.waitForFunction(() => /^Fa 4\d s$/.test(document.querySelector('.refresh-age').textContent));
+    await page.getByRole('button', { name: 'Configuració', exact: true }).click();
+    await page.getByRole('heading', { name: 'Configuració', exact: true }).waitFor();
+    await page.getByLabel('Nom del compte 1').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => !document.querySelector('#account-name-1').disabled);
+    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Compte 1');
+    await page.getByLabel('Nom del compte 1').fill('Nom no desat');
+    await page.getByRole('button', { name: 'Cancel·la', exact: true }).click();
+    assert.equal(await page.locator('.account-1 h2').innerText(), 'Compte 1');
+    await page.getByRole('button', { name: 'Configuració', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('#account-name-1').disabled);
+    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Compte 1');
+    await page.getByLabel('Nom del compte 1').fill(' ');
+    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'entre 1 i 100' }).waitFor();
+    await page.getByLabel('Nom del compte 1').fill('Personal ✉️');
+    await page.getByLabel('Nom del compte 2').fill('Projectes');
+    for (const width of [320, 375, 390, 430, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(page); }
+    await page.setViewportSize({ width: 390, height: 900 });
+    assert.equal(await page.locator('.brand-symbol').count(), 1);
+    assert.equal(await page.locator('footer').innerText(), 'Brevo MiniApp · Accés privat');
+    await page.screenshot({ path: join(directory, `${label}-settings.png`) });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route('**/api/settings/accounts', async route => {
+      if (route.request().method() === 'POST') await route.fulfill({ status: 500, json: { error: 'INTERNAL_ERROR' } });
+      else await route.continue();
+    });
+    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'No s’ha pogut confirmar' }).waitFor();
+    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Personal ✉️');
+    await page.unroute('**/api/settings/accounts');
+    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    await page.locator('.account-1 h2').getByText('Personal ✉️', { exact: true }).waitFor();
+    assert.equal(await page.locator('.account-2 h2').innerText(), 'Projectes');
+    const peer = await browser.newContext();
+    assert.equal((await peer.request.post(`${base}/api/auth/login`, { headers: { origin: base, 'x-app-request': '1' }, data: { password } })).status(), 200);
+    assert.deepEqual(await (await peer.request.get(`${base}/api/settings/accounts`)).json(), { names: { '1': 'Personal ✉️', '2': 'Projectes' } });
+    assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
+    await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.refresh-button').disabled);
+    assert.equal(await page.locator('.account-1 h2').innerText(), 'Personal ✉️');
+    await page.evaluate(() => { window.__testNowOffset = 0; });
+    await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
+    await page.waitForFunction(() => /^Fa \d+ s$/.test(document.querySelector('.refresh-age').textContent));
     await noOverflow(page); await page.screenshot({ path: join(directory, `${label}-overview.png`), fullPage: true });
     const card = page.locator('.account-1');
     await card.getByRole('button', { name: 'Estadístiques i evolució' }).click();
@@ -123,9 +176,32 @@ async function verify(browserType, label, executablePath) {
     await page.route('**/api/accounts', async (route) => { readCalls++; await route.abort(); });
     await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'No s’han pogut actualitzar' }).waitFor();
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+      document.dispatchEvent(new Event('visibilitychange')); window.__testNowOffset = 135000;
+    });
+    const frozen = await page.locator('.refresh-age').innerText(), hiddenCalls = readCalls;
+    await page.waitForTimeout(1100);
+    assert.equal(await page.locator('.refresh-age').innerText(), frozen, 'Rellotge aturat en segon pla');
+    assert.equal(readCalls, hiddenCalls, 'Sense polling ocult');
+    await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
+    await page.waitForFunction(() => /^Fa 2 min 1\d s$/.test(document.querySelector('.refresh-age').textContent));
+    await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'No s’han pogut actualitzar' }).waitFor();
+    assert.match(await page.locator('.refresh-age').innerText(), /^Fa 2 min/);
     assert((await page.locator('.provenance.is-warning').count()) >= 4);
     const before = readCalls; await page.waitForTimeout(1200); assert.equal(readCalls, before, 'No hi ha polling');
     await page.unroute('**/api/accounts');
+    await page.route('**/api/accounts', async route => {
+      const old = structuredClone(fixture);
+      for (const account of old.accounts) for (const section of [account.quota, account.smtp.today.report, account.smtp.totals, account.smtp.daily, account.marketing.campaigns]) section.status = 'stale';
+      await route.fulfill({ json: old });
+    });
+    await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Algunes dades' }).waitFor();
+    assert.match(await page.locator('.refresh-age').innerText(), /^Fa 2 min/);
+    await page.unroute('**/api/accounts');
+    await page.evaluate(() => { window.__testNowOffset = 0; });
     await page.route('**/api/accounts', async (route) => {
       const partial = structuredClone(fixture); partial.accounts[1].quota = { data: null, status: 'unavailable', updatedAt: null, error: 'BREVO_UNAVAILABLE' };
       await route.fulfill({ json: partial });
@@ -162,8 +238,7 @@ async function verify(browserType, label, executablePath) {
     await page.getByRole('button', { name: 'Desa la contrasenya', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'actual no és correcta' }).waitFor();
     for (const input of await page.locator('.password-card input').all()) assert.equal(await input.inputValue(), '');
-    const other = await browser.newContext();
-    assert.equal((await other.request.post(`${base}/api/auth/login`, { headers: { origin: base, 'x-app-request': '1' }, data: { password } })).status(), 200);
+    const other = peer;
     await page.getByLabel('Contrasenya actual', { exact: true }).fill(password);
     await page.getByLabel('Contrasenya nova', { exact: true }).fill(nextPassword);
     await page.getByLabel('Confirma la contrasenya nova', { exact: true }).fill(nextPassword);
@@ -181,7 +256,7 @@ async function verify(browserType, label, executablePath) {
     const unauthorized = await context.request.get(`${base}/api/accounts`); assert.equal(unauthorized.status(), 401);
     assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
     assert.deepEqual(errors, []);
-    await context.close(); console.log(`${label}: accés, dades, gràfic, errors, canvi de contrasenya, sessions i amplades 320–1280 correctes.`);
+    await context.close(); console.log(`${label}: accés, noms, temporitzador, gràfic, errors, canvi de contrasenya, sessions i amplades 320–1280 correctes.`);
   } finally { await browser?.close(); await app.close(); }
 }
 const engines = (process.env['UI_BROWSERS'] ?? 'chromium').split(',');

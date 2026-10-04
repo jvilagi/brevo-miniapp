@@ -56,6 +56,10 @@ han de viure fora del codi i de la imatge Docker.
   una recuperació de contrasenya oblidada; vegeu la guia d'instal·lació.
 - Memòria cau de dades de 60 segons al servidor; errors parcials i dades
   antigues identificades, fins a 15 minuts. Una dada absent no és zero.
+- «Configuració», sota les targetes, permet desar noms propis dels dos
+  comptes al servidor, compartits entre dispositius. No canvia res a Brevo.
+  Al costat d'«Actualitza», un comptador mostra el temps des de l'última
+  consulta correcta; no és l'edat de cada dada ni afegeix polling.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
   calcula com `300 - enviats` ni se sumen crèdits prepagament i quota Free.
   L'hora exacta de reinici Free no està verificada; la pantalla no la
@@ -75,7 +79,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 38 proves (33 API + 5 presentació), compilació i separació
+Comprova tipus, 45 proves (39 API + 6 presentació), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

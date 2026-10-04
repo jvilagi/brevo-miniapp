@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 import { validPasswordHash } from './password.js';
 import { readStoredPassword } from './password-store.js';
+import { readAccountNames } from './account-names.js';
 
 export interface AuthConfig { passwordHash: string; sessionSecret: string }
 export interface AccountConfig { id: '1' | '2'; name: string; apiKey: string | null }
@@ -15,6 +16,7 @@ export interface PrivateConfig {
   timezone: string;
   production: boolean;
   passwordFile?: string;
+  accountNamesFile?: string;
 }
 
 export async function readPrivateEnv(path: string, optional = false): Promise<NodeJS.ProcessEnv> {
@@ -45,6 +47,8 @@ export async function loadPrivateConfig(env: NodeJS.ProcessEnv = process.env): P
   }
   const passwordFile = env['AUTH_PASSWORD_FILE'] ?? join(dirname(authFile), 'access', 'password.json');
   if (passwordHash) passwordHash = await readStoredPassword(passwordFile) ?? passwordHash;
+  const accountNamesFile = env['ACCOUNT_NAMES_FILE'] ?? join(dirname(passwordFile), 'account-names.json');
+  const names = await readAccountNames(accountNamesFile);
   const production = env['NODE_ENV'] === 'production';
   if (production && !env['PUBLIC_ORIGIN']) throw new Error('Cal definir PUBLIC_ORIGIN amb el teu origen HTTPS.');
   const origin = env['PUBLIC_ORIGIN'] ?? 'http://127.0.0.1:5174';
@@ -60,8 +64,8 @@ export async function loadPrivateConfig(env: NodeJS.ProcessEnv = process.env): P
   return {
     auth: passwordHash && sessionSecret ? { passwordHash, sessionSecret } : null,
     accounts: (['1', '2'] as const).map((id) => ({ id,
-      name: (env[`BREVO_ACCOUNT_${id}_NAME`] ?? `Compte ${id}`).slice(0, 100),
+      name: names?.[id] ?? (env[`BREVO_ACCOUNT_${id}_NAME`] ?? `Compte ${id}`).slice(0, 100),
       apiKey: env[`BREVO_ACCOUNT_${id}_API_KEY`] ?? accountsEnv[`BREVO_ACCOUNT_${id}_API_KEY`] ?? null,
-    })), origin, timezone, production, passwordFile,
+    })), origin, timezone, production, passwordFile, accountNamesFile,
   };
 }

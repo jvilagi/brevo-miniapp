@@ -53,6 +53,25 @@ Si no hi ha escriptura configurada, el canvi retorna `503`.
 
 Referència de seguretat: [OWASP, canvi de contrasenya](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#change-password-feature).
 
+## Noms dels comptes
+
+`GET /api/settings/accounts` retorna `{ "names": { "1": "…", "2": "…" } }`
+només amb sessió. `POST` al mateix endpoint desa aquests dos noms: sessió,
+origen i capçalera pròpia obligatoris, 10 intents per minut, un desament
+alhora. Noms d'1–100 caràcters, retall d'espais exteriors, sense caràcters
+de control ni camps addicionals; s'admet Unicode i noms repetits.
+No es modifiquen els comptes a Brevo ni les claus, hash o sessions.
+
+`ACCOUNT_NAMES_FILE` és privat, per defecte `account-names.json` al mateix
+directori de `AUTH_PASSWORD_FILE`. Utilitza el mateix desament atòmic
+privat `0600`/`0700`, amb validació pròpia i fora del checkout. Si existeix,
+preval sobre `BREVO_ACCOUNT_1_NAME` i `BREVO_ACCOUNT_2_NAME` en reiniciar.
+Un fitxer invàlid impedeix l'arrencada; no es reinicialitza silenciosament.
+El canvi només es reflecteix en memòria després de desar; en error es
+conserven els noms anteriors. Sense writer retorna `503`. Els snapshots
+apliquen els noms actuals també sobre dades Brevo en cache. Altres
+dispositius els veuen en la pròxima lectura, no mitjançant notificacions push.
+
 ## Dades Brevo
 
 Només GET cap a quatre endpoints fixos de `api.brevo.com`, timeout de

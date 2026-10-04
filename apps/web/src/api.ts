@@ -1,4 +1,4 @@
-import type { AccountsResponse, SessionResponse } from '@brevo-miniapp/contracts';
+import type { AccountNames, AccountSettings, AccountsResponse, SessionResponse } from '@brevo-miniapp/contracts';
 
 export class ApiFailure extends Error {
   constructor(public status: number, public code?: 'CURRENT_PASSWORD_INCORRECT' | 'PASSWORD_CHANGE_UNAVAILABLE') { super('Petició no disponible.'); }
@@ -15,6 +15,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export const session = (signal: AbortSignal) => request<SessionResponse>('/api/auth/session', { signal });
 export const accounts = (signal: AbortSignal) => request<AccountsResponse>('/api/accounts', { signal });
+export const accountSettings = (signal: AbortSignal) => request<AccountSettings>('/api/settings/accounts', { signal });
+export const saveAccountSettings = (names: AccountNames) => request<AccountSettings>('/api/settings/accounts', {
+  method: 'POST', headers: { 'content-type': 'application/json', 'x-app-request': '1' }, body: JSON.stringify({ names }),
+});
 export const login = (password: string) => request<SessionResponse>('/api/auth/login', {
   method: 'POST', headers: { 'content-type': 'application/json', 'x-app-request': '1' }, body: JSON.stringify({ password }),
 });

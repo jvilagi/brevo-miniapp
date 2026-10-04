@@ -43,12 +43,12 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 33 proves d'accés privat, sessions, canvi persistent de contrasenya,
+Hi ha 39 proves d'accés privat, sessions, canvi persistent de contrasenya,
 límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 5 proves de presentació i la
+verificat amb els dos comptes reals. Hi ha 6 proves de presentació i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
@@ -69,6 +69,19 @@ separat i revoca totes les sessions després de desar-lo. El hash nou té
 prioritat sobre el bootstrap d'`auth.env`, també en reiniciar. El muntatge
 d'escriptura de Docker només cobreix aquest directori; claus Brevo i
 configuració inicial continuen readonly. No hi ha recuperació pública.
+
+Noms editables des de «Configuració», després d'entrar. GET/POST propis
+autenticats amb protecció d'origen, validació i límit de canvis. Dos noms
+persistents al servidor en `access/account-names.json`, separats del hash
+i de les claus. Prevalen sobre els noms inicials de l'entorn, es conserven
+en reiniciar i s'apliquen als snapshots encara que Brevo estigui en cache.
+No s'envien canvis a Brevo ni es desa configuració al navegador.
+
+Comptador d'«Actualitza» des de l'última resposta vàlida amb alguna secció
+fresca, no des de la data de cada font. No es reinicia amb errors de xarxa
+ni quan tota la resposta és antiga/indisponible. Timestamps i avisos de
+secció continuen distingint cache i antiguitat. Interval visual només en
+primer pla, recalculat amb el rellotge real en reprendre; no és polling.
 
 La cache dura 60 segons. En error, cada secció independent pot conservar
 dades antigues fins a 15 minuts, amb estat i timestamp original; després
@@ -188,7 +201,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-38 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
+45 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

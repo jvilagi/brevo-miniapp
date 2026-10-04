@@ -106,5 +106,5 @@ export async function registerAuth(app: FastifyInstance, config: { auth: AuthCon
       return { authenticated: false, configured: true } satisfies SessionResponse;
     } finally { changing = false; concurrentChecks--; }
   });
-  return authenticated;
+  return { authenticated, sameOrigin };
 }

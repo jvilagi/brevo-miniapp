@@ -3,11 +3,12 @@ import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ApiError, HealthResponse } from '@brevo-miniapp/contracts';
+import type { AccountNames, AccountSettings, ApiError, HealthResponse } from '@brevo-miniapp/contracts';
 import type { PrivateConfig } from './private-config.js';
 import { registerAuth } from './auth.js';
 import type { AccountsService } from './brevo.js';
 import { savePassword } from './password-store.js';
+import { normalizeNames, saveAccountNames } from './account-names.js';
 
 export interface AppOptions {
   serveWeb?: boolean;
@@ -15,11 +16,12 @@ export interface AppOptions {
   privateConfig?: PrivateConfig;
   accountsService?: Pick<AccountsService, 'snapshot'>;
   passwordWriter?: (hash: string) => Promise<void>;
+  namesWriter?: (names: AccountNames) => Promise<void>;
 }
 
 export async function buildApp(options: AppOptions = {}) {
   // No es registren capçaleres, credencials ni excepcions amb respostes Brevo.
-  const app = Fastify({ logger: false, bodyLimit: 16 * 1024 });
+  const app = Fastify({ logger: false, bodyLimit: 16 * 1024, ajv: { customOptions: { removeAdditional: false } } });
 
   app.addHook('onRequest', async (_request, reply) => {
     reply.header('Cache-Control', 'no-store');
@@ -36,13 +38,42 @@ export async function buildApp(options: AppOptions = {}) {
     auth: null, origin: 'http://127.0.0.1:5174', production: false,
   };
   const passwordFile = options.privateConfig?.passwordFile;
-  const authenticated = await registerAuth(app, privateConfig,
+  const { authenticated, sameOrigin } = await registerAuth(app, privateConfig,
     options.passwordWriter ?? (passwordFile ? (hash) => savePassword(passwordFile, hash) : undefined));
+  const requireSession = async (request: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => {
+    if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
+  };
+  let names: AccountNames = {
+    '1': options.privateConfig?.accounts.find((account) => account.id === '1')?.name ?? 'Compte 1',
+    '2': options.privateConfig?.accounts.find((account) => account.id === '2')?.name ?? 'Compte 2',
+  };
+  const namesFile = options.privateConfig?.accountNamesFile;
+  const namesWriter = options.namesWriter ?? (namesFile ? (value: AccountNames) => saveAccountNames(namesFile, value) : undefined);
+  let savingNames = false;
+  app.get('/api/settings/accounts', { onRequest: requireSession }, async () => ({ names } satisfies AccountSettings));
+  app.post<{ Body: AccountSettings }>('/api/settings/accounts', {
+    onRequest: [sameOrigin, requireSession], config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+    schema: { body: { type: 'object', required: ['names'], additionalProperties: false, properties: {
+      names: { type: 'object', required: ['1', '2'], additionalProperties: false, properties: {
+        '1': { type: 'string', minLength: 1, maxLength: 100 }, '2': { type: 'string', minLength: 1, maxLength: 100 },
+      } },
+    } } },
+  }, async (request, reply) => {
+    let next: AccountNames;
+    try { next = normalizeNames(request.body.names); }
+    catch { return reply.code(400).send({ error: 'BAD_REQUEST' } satisfies ApiError); }
+    if (!namesWriter) return reply.code(503).send({ error: 'INTERNAL_ERROR' } satisfies ApiError);
+    if (savingNames) return reply.code(429).send({ error: 'RATE_LIMITED' } satisfies ApiError);
+    savingNames = true;
+    try { await namesWriter(next); names = next; return { names } satisfies AccountSettings; }
+    finally { savingNames = false; }
+  });
   app.all('/api/accounts', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (request, reply) => {
     if (!authenticated(request)) return reply.code(401).send({ error: 'UNAUTHORIZED' } satisfies ApiError);
     if (request.method !== 'GET') return reply.code(404).send({ error: 'NOT_FOUND' } satisfies ApiError);
     if (!options.accountsService) return reply.code(500).send({ error: 'INTERNAL_ERROR' } satisfies ApiError);
-    return options.accountsService.snapshot();
+    const snapshot = await options.accountsService.snapshot();
+    return { ...snapshot, accounts: snapshot.accounts.map((account) => ({ ...account, name: names[account.id] })) };
   });
 
   if (options.serveWeb) {

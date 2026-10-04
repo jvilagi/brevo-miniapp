@@ -59,3 +59,5 @@ export interface AccountSnapshot {
 
 export interface AccountsResponse { generatedAt: string; accounts: AccountSnapshot[] }
 export interface SessionResponse { authenticated: boolean; configured: boolean }
+export type AccountNames = Record<'1' | '2', string>;
+export interface AccountSettings { names: AccountNames }

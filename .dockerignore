@@ -13,8 +13,10 @@ secrets
 **/runtime.env
 **/compose.env
 **/password.json
+**/account-names.json
 **/access
 **/.password-*.tmp
+**/.private-*.tmp
 sources
 **/*.pem
 **/*.key

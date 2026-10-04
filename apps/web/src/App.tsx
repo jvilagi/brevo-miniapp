@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import type { AccountsResponse, SessionResponse } from '@brevo-miniapp/contracts';
+import type { AccountNames, AccountsResponse, SessionResponse } from '@brevo-miniapp/contracts';
 import * as api from './api';
 import { AccountCard } from './AccountCard';
 import { Icon } from './icons';
 import { PwaControls } from './PwaControls';
 import { updatedLabel, zoneLabel } from './presentation';
 import { ChangePassword } from './ChangePassword';
+import { AccountSettings } from './AccountSettings';
+import { RefreshAge } from './RefreshAge';
 
 function Brand() {
   return <div className="brand"><img className="brand-symbol" src="/brand/miniapp-mark.svg" alt="" width="36" height="36"/><span className="brand-name">MiniApp<span className="brand-caption">per a Brevo</span></span></div>;
@@ -57,6 +59,9 @@ export function App() {
   const epoch = useRef(0);
   const [retry, setRetry] = useState(0);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [editingSettings, setEditingSettings] = useState(false);
+  const [lastConsult, setLastConsult] = useState<number | null>(null);
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController(); setSessionError(false);
@@ -71,11 +76,15 @@ export function App() {
       const result = await api.accounts(controller.signal);
       if (epoch.current !== requestEpoch || controller.signal.aborted) return;
       if (!Array.isArray(result.accounts) || result.accounts.length !== 2) throw new Error();
+      const hasFresh = result.accounts.some((account) => [account.quota, account.smtp.today.report, account.smtp.totals, account.smtp.daily, account.marketing.campaigns]
+        .some((section) => section.status === 'fresh' && section.data !== null));
       setData(result); setError(null); lastRead.current = Date.now();
+      if (hasFresh) setLastConsult(Date.now());
     } catch (failure) {
       if (controller.signal.aborted || epoch.current !== requestEpoch) return;
       if (failure instanceof api.ApiFailure && failure.status === 401) {
-        setData(null); setChangingPassword(false); setAuth({ authenticated: false, configured: true }); setSessionMessage('La teva sessió ha caducat. Torna a entrar.');
+        setData(null); setChangingPassword(false); setEditingSettings(false); setLastConsult(null); setSettingsMessage(null);
+        setAuth({ authenticated: false, configured: true }); setSessionMessage('La teva sessió ha caducat. Torna a entrar.');
       } else setError(failure instanceof api.ApiFailure && failure.status === 429 ? 'Massa consultes seguides. Espera un minut i torna-ho a provar.' : 'No s’han pogut actualitzar les dades. Els valors anteriors poden haver canviat.');
     } finally {
       if (inFlight.current === controller) { inFlight.current = null; setLoading(false); }
@@ -98,17 +107,28 @@ export function App() {
   async function signOut() {
     setLeaving(true); epoch.current++; inFlight.current?.abort(); inFlight.current = null;
     try {
-      await api.logout(); setData(null); setAuth({ authenticated: false, configured: true }); setError(null); setSessionMessage(null); lastRead.current = 0;
+      await api.logout(); setData(null); setAuth({ authenticated: false, configured: true }); setError(null); setSessionMessage(null);
+      setLastConsult(null); setSettingsMessage(null); lastRead.current = 0;
     } catch { setError('No s’ha pogut tancar la sessió al servidor. Comprova la connexió i torna-ho a provar.'); }
     finally { setLeaving(false); setLoading(false); }
   }
   function endSession(message: string) {
     epoch.current++; inFlight.current?.abort(); inFlight.current = null; lastRead.current = 0;
-    setData(null); setError(null); setLoading(false); setChangingPassword(false);
+    setData(null); setError(null); setLoading(false); setChangingPassword(false); setEditingSettings(false); setLastConsult(null); setSettingsMessage(null);
     setAuth({ authenticated: false, configured: true }); setSessionMessage(message);
+  }
+  const expired = useCallback(() => endSession('La teva sessió ha caducat. Torna a entrar.'), []);
+  function namesSaved(names: AccountNames) {
+    // Una consulta iniciada abans del desament no pot recuperar els noms anteriors.
+    epoch.current++; inFlight.current?.abort(); inFlight.current = null; setLoading(false);
+    setData((current) => current ? { ...current, accounts: current.accounts.map((account) => ({ ...account, name: names[account.id] })) } : current);
+    setEditingSettings(false); setSettingsMessage('Noms desats. Els veuràs també als altres dispositius quan actualitzin.');
   }
   if (!auth) return <main className="connection-screen"><Brand/>{sessionError ? <><h1>No podem connectar</h1><p>Comprova la connexió amb el servidor.</p><button className="primary-button" onClick={() => setRetry(retry + 1)}>Torna-ho a provar</button></> : <p role="status">Preparant la teva MiniApp…</p>}</main>;
   if (!auth.authenticated) return <Login configured={auth.configured} message={sessionMessage} onLogin={() => { setAuth({ authenticated: true, configured: true }); setSessionMessage(null); }}/>;
+  if (editingSettings) return <div className="login-shell"><header><Brand/><span className="private-label"><Icon name="lock"/>Accés privat</span></header>
+    <main className="login-main"><AccountSettings onDone={namesSaved} onCancel={() => setEditingSettings(false)} onExpired={expired}/></main>
+    <footer>Brevo MiniApp · Accés privat</footer></div>;
   if (changingPassword) return <div className="login-shell"><header><Brand/><span className="private-label"><Icon name="lock"/>Accés privat</span></header>
     <main className="login-main"><ChangePassword onCancel={() => setChangingPassword(false)}
       onDone={() => endSession('Contrasenya actualitzada. Totes les sessions s’han tancat. Entra amb la nova contrasenya.')}
@@ -119,16 +139,18 @@ export function App() {
   return <div className="dashboard-shell"><a className="skip-link" href="#accounts">Ves als comptes</a>
     <header className="topbar"><Brand/><button className="quiet-button logout-button" type="button" onClick={() => { void signOut(); }} disabled={leaving} aria-label="Tanca la sessió"><Icon name="logout"/><span>{leaving ? 'Sortint…' : 'Surt'}</span></button></header>
     <main><section className="dashboard-intro"><div><span className="eyebrow">EL TEU RESUM DIARI</span><h1>Tot sota control<span className="heading-dot">.</span></h1>
-      <p>Dos comptes. Una sola mirada.</p></div><button type="button" className="refresh-button" disabled={loading || leaving} onClick={() => { void refresh(true); }}>
-        <Icon name="refresh" className={loading ? 'spinning' : ''}/><span>{loading ? 'Actualitzant…' : 'Actualitza'}</span></button></section>
+      <p>Dos comptes. Una sola mirada.</p></div><div className="refresh-controls"><RefreshAge since={lastConsult}/><button type="button" className="refresh-button" disabled={loading || leaving} onClick={() => { void refresh(true); }}>
+        <Icon name="refresh" className={loading ? 'spinning' : ''}/><span>{loading ? 'Actualitzant…' : 'Actualitza'}</span></button></div></section>
       <div className="dashboard-meta"><span className={`connection-dot ${error || offline ? 'warning' : ''}`}/><span role="status">{offline ? 'Sense connexió' : loading ? 'Consultant Brevo…' : error ? 'Actualització pendent' : hasOld ? 'Algunes dades no estan disponibles o són antigues' : data ? 'Dades carregades' : 'Preparant els comptes'}</span>
         {data && <span className="last-read">Consulta {updatedLabel(data.generatedAt, timezone)} · {zoneLabel(timezone)}</span>}</div>
       {(error || offline) && <p className="notice" role="alert">{offline ? 'Sense connexió. Les dades mostrades són les de l’última consulta i poden haver canviat.' : error}</p>}
+      {settingsMessage && <p className="settings-notice" role="status">{settingsMessage}</p>}
       <section id="accounts" className="accounts-grid" aria-label="Els teus comptes Brevo" aria-busy={loading}>
         {data ? data.accounts.map((account) => <AccountCard key={account.id} account={account} locallyStale={Boolean(error || offline)}/>) : loading ? [1, 2].map((id) => <div key={id} className="account-card skeleton" aria-hidden="true"><div/><div/><div/></div>) :
           <div className="empty-state"><h2>No s’han carregat els comptes</h2><p>Pots tornar-ho a provar amb el botó Actualitza.</p></div>}
       </section><aside className="dashboard-footnote"><Icon name="lock"/><p>Només consulta. El saldo el proporciona Brevo; mai es calcula restant els enviaments d’avui.</p></aside>
-      <button className="quiet-button password-settings" type="button" disabled={leaving} onClick={() => setChangingPassword(true)}><Icon name="lock"/>Canvia la contrasenya</button>
+      <div className="settings-actions"><button className="quiet-button" type="button" disabled={leaving} onClick={() => setEditingSettings(true)}><Icon name="settings"/>Configuració</button>
+      <button className="quiet-button" type="button" disabled={leaving} onClick={() => setChangingPassword(true)}><Icon name="lock"/>Canvia la contrasenya</button></div>
     </main><PwaControls/><footer>Brevo MiniApp <span>·</span> La teva vista privada <span>·</span> No és una app oficial de Brevo</footer>
   </div>;
 }

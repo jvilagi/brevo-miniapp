@@ -1,6 +1,12 @@
 import type { DataSection, Quota, SmtpMetric } from '@brevo-miniapp/contracts';
 
 export const number = (value: number | null | undefined) => value === null || value === undefined ? '—' : new Intl.NumberFormat('ca-ES').format(value);
+export function elapsedLabel(since: number, now: number) {
+  const seconds = Math.max(0, Math.floor((now - since) / 1000));
+  const days = Math.floor(seconds / 86400), hours = Math.floor(seconds / 3600) % 24;
+  const minutes = Math.floor(seconds / 60) % 60, rest = seconds % 60;
+  return `Fa ${days ? `${days} d ` : ''}${days || hours ? `${hours} h ` : ''}${days || hours || minutes ? `${minutes} min ` : ''}${rest} s`;
+}
 export const metricLabels: Record<SmtpMetric, string> = {
   requests: 'Sol·licituds d’enviament', delivered: 'Entregues', opens: 'Obertures totals', uniqueOpens: 'Obertures úniques reportades',
   clicks: 'Clics totals', uniqueClicks: 'Clics únics reportats', hardBounces: 'Rebots permanents', softBounces: 'Rebots temporals',

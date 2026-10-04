@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-38 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+45 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -120,3 +120,28 @@ reals. Caddy, DNS i serveis aliens no modificats. El reinici revoca les
 sessions, no la contrasenya. Després d'un canvi no s'ha de tornar a una
 versió que ignori el hash persistent; vegeu `deploy/README.md`.
 No hi ha recuperació de contrasenya oblidada des del navegador.
+
+## Noms dels comptes i temps des de l'actualització
+
+Implementats localment el 2026-10-04, amb ubicació i estil aprovats:
+«Configuració» al costat de «Canvia la contrasenya», dos noms amb desament
+privat al servidor i persistència entre sessions i reinicis. GET/POST
+autenticats, protecció d'origen, validació, permisos restringits i rename
+atòmic. Els noms s'apliquen sobre snapshots en cache, sense tocar Brevo,
+les claus ni el hash. Fitxer separat al muntatge privat existent.
+
+Comptador al costat d'«Actualitza»: temps des de l'última resposta vàlida
+amb almenys una secció fresca. Errors de xarxa i respostes completament
+antigues/indisponibles no el reinicien. Les respostes parcials mantenen
+els seus avisos i cada secció conserva el seu timestamp. No és l'edat
+de cada dada de Brevo. Interval visual suspès quan l'app és oculta i
+temps recalculat en reprendre, sense afegir polling de dades.
+
+45 proves (39 API + 6 presentació), tipus, compilació i separació de
+secrets superats. Chrome UI/PWA verificats amb dades sintètiques: noms,
+errors, cancel·lació, altra sessió, comptador i segon pla, sense regressions
+en accés, gràfic o canvi de contrasenya. Formulari i resum mòbil/escriptori
+revisats visualment, amplades 320–1280 px. Safari/iPhone real pendent.
+Publicació i desplegament aprovats; pendents de les comprovacions
+d'operació. Fins aquí, cap configuració real ni servei de producció
+modificat en aquesta tasca.

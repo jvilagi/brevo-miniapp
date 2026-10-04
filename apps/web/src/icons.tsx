@@ -1,5 +1,6 @@
-export function Icon({ name, className = '' }: { name: 'refresh' | 'logout' | 'chevron' | 'lock' | 'mail' | 'arrow' | 'install' | 'delivered' | 'eye' | 'cursor' | 'ban'; className?: string }) {
+export function Icon({ name, className = '' }: { name: 'settings' | 'refresh' | 'logout' | 'chevron' | 'lock' | 'mail' | 'arrow' | 'install' | 'delivered' | 'eye' | 'cursor' | 'ban'; className?: string }) {
   const paths = {
+    settings: <><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2" fill="white"/><circle cx="16" cy="12" r="2" fill="white"/><circle cx="10" cy="18" r="2" fill="white"/></>,
     refresh: <><path d="M4 8h15l-4-4m5 12H5l4 4M4 8v5m16 3v-5"/></>,
     logout: <><path d="M9 4H4v16h5m5-12 4 4-4 4m-5-4h12"/></>,
     chevron: <path d="m6 9 6 6 6-6"/>,

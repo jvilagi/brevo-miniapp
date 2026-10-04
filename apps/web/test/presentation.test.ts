@@ -1,9 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chartPoints, number, quotaPresentation, sectionStatus, updatedLabel } from '../src/presentation';
+import { chartPoints, elapsedLabel, number, quotaPresentation, sectionStatus, updatedLabel } from '../src/presentation';
 
 test('valors desconeguts, zero i format català', () => {
   assert.equal(number(null), '—'); assert.equal(number(undefined), '—'); assert.equal(number(0), '0'); assert.equal(number(8400), '8.400');
+});
+test('temps transcorregut en segons, minuts, hores i dies, sense valors negatius', () => {
+  assert.equal(elapsedLabel(1000, 999), 'Fa 0 s');
+  assert.equal(elapsedLabel(1000, 59999), 'Fa 58 s');
+  assert.equal(elapsedLabel(1000, 61000), 'Fa 1 min 0 s');
+  assert.equal(elapsedLabel(1000, 136000), 'Fa 2 min 15 s');
+  assert.equal(elapsedLabel(1000, 3601000), 'Fa 1 h 0 min 0 s');
+  assert.equal(elapsedLabel(1000, 90062000), 'Fa 1 d 1 h 1 min 1 s');
 });
 test('quota Free disponible segons API; prepagament sense barra ni quota inventada', () => {
   const free = quotaPresentation({ regime: 'free', available: 285, dailyLimit: 300 });

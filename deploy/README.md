@@ -21,6 +21,7 @@ Exemple de disposició, fora del checkout de les versions:
     compose.env   0600, directori privat i identificador de versió
     access/       0700, propietari uid 1000, muntatge separat d'escriptura
       password.json  0600, hash actual després d'un canvi des de l'app
+      account-names.json  0600, noms propis després de desar-los des de l'app
   caddy/site.conf
 ```
 
@@ -36,6 +37,11 @@ Només aquest directori té muntatge d'escriptura a `/run/private-auth`;
 `accounts.env` i `auth.env` continuen en només lectura i el sistema de
 fitxers del contenidor segueix readonly. `AUTH_PASSWORD_FILE` apunta al
 hash persistent d'aquest directori. No copiïs un hash canviat al release.
+`ACCOUNT_NAMES_FILE` apunta també a aquest muntatge, en un fitxer separat.
+No cal crear els dos JSON abans d'arrencar: es creen en desar des de l'app.
+Conserva tot el directori entre versions; els noms desats prevalen sobre
+els de `runtime.env`. Una versió anterior als noms personalitzables els
+ignoraria fins a tornar a una versió compatible.
 
 Copia `runtime.env.example` fora del checkout com a `private/runtime.env`:
 defineix **el teu** `PUBLIC_ORIGIN=https://el-teu-domini` sense barra final,

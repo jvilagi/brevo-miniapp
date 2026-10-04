@@ -25,3 +25,9 @@ protecció d'origen i límit d'intents. `access/password.json` és també
 privat: conté el hash actual i preval sobre l'inicial. Protegeix-lo en
 còpies de seguretat, exclusions i retorns de versió. No té contrasenya
 en text pla. No hi ha recuperació pública, MFA ni rèpliques coordinades.
+
+Els noms propis també són configuració privada (`access/account-names.json`),
+no formen part del release ni de la imatge. Només es consulten i canvien
+amb sessió; els canvis exigeixen origen, capçalera i límit d'intents.
+El fitxer comparteix el directori d'escriptura però no el hash ni les claus.
+Un únic procés backend; no edicions externes concurrents d'aquests fitxers.

@@ -24,6 +24,20 @@ amb actual/nova/confirmació. Cancel·lar el desmunta; els camps s'esborren
 abans d'enviar-los. Èxit esborra el tauler i torna a login, perquè totes
 les sessions s'han revocat. No és una recuperació de contrasenya oblidada.
 
+«Configuració», al costat, permet editar els dos noms amb desament al
+servidor. Cancel·lar descarta l'edició; errors conserven els camps, sessió
+caducada torna a login. Èxit actualitza els títols sense recarregar Brevo.
+Els noms no es desen en emmagatzematge persistent del navegador.
+
+El comptador al costat d'«Actualitza» mesura temps des de l'última resposta
+vàlida amb almenys una secció fresca. Error de xarxa o resposta amb totes
+les seccions antigues/indisponibles no el reinicia. Una resposta parcial
+pot reiniciar-lo: els avisos i timestamps de cada secció són independents.
+Tampoc identifica una nova lectura de Brevo si la resposta prové de cache.
+El rellotge usa timestamps, no ticks acumulats: es reprèn amb el temps
+real després del segon pla i atura l'interval quan la pàgina és oculta.
+No consulta l'API per segon ni anuncia cada tick als lectors de pantalla.
+
 `pwa-plugin.ts` genera una versió de cache a partir dels recursos compilats.
 El worker només precacheja la llista explícita d'estàtics, amb credencials
 omeses. No desa peticions ni respostes `/api/`, POST, altres orígens,
@@ -39,7 +53,7 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-5 proves de presentació incloses a `npm test`, inclòs el saldo Free
+6 proves de presentació incloses a `npm test`, inclosos el comptador i el saldo Free
 independent de les sol·licituds SMTP i sense hora de reinici inventada.
 La comprovació de navegador
 és separada: `npm run test:ui` compila i executa `scripts/check-ui.mjs`
