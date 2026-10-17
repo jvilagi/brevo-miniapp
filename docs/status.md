@@ -404,9 +404,39 @@ automàtica ni s'accepten respostes obsoletes. Reintent i controls PWA
 visibles durant l'espera i en error. Enllaç `/?recovery=1` per obtenir
 HTML de xarxa sense eliminar cookies, dades o subscripcions.
 
-15 proves web superades, compilació correcta i regressions Chrome
-d'arrencada/PWA superades amb dades sintètiques: petició pendent,
+75 proves (60 API + 15 web), tipus, compilació i separació de secrets
+superats al Mac i repetits en un contenidor Linux sense secrets ni xarxa
+externa. Regressions Chrome UI/PWA/arrencada superades amb dades sintètiques: petició pendent,
 timeout, reintent, resposta tardana, represa, offline/online, JSON invàlid,
 actualització durant l'espera i recuperació fora de cache. Captura d'error
-mòbil generada. Comprovació completa Linux i desplegament encara pendents.
-La confirmació del resultat a l'iPhone real correspon a l'usuari.
+mòbil revisada, controls sense desbordament a 320, 390 i 1280 px.
+
+### Publicació i desplegament verificats
+
+Commit públic `1907b9b`, només a `main`. Clonació nova amb fitxers
+idèntics al codi provat, arrel pública separada i autors noreply; 386
+objectes revisats sense coincidències amb secrets coneguts ni dades
+privades examinades. Paquet del commit net, 94 fitxers públics i SHA-256
+verificats. Revisió dirigida, no una auditoria externa.
+
+Activada la versió `20261017t154831z-3083220d`, saludable, Node 24.21.0,
+uid 1000 i arrel readonly. Candidata comprovada amb configuració real en
+només lectura i persistència sintètica separada. Hash persistent, secret
+de sessió, claus, comptes, noms i configuració idèntics abans i després.
+Només ha canviat el tag de Compose i s'ha reiniciat la MiniApp: sessions
+revocades, mateixa contrasenya. Avisos encara desactivats, sense correus
+ni push reals. Caddy, DNS i serveis aliens intactes. Còpia privada de
+retorn, release i imatge anteriors conservats; verificador i fitxers
+temporals de la candidata retirats.
+
+HTTPS verificat: HTML, JavaScript, CSS, worker i recursos idèntics al
+build provat. Tretze endpoints privats sense sessió responen `401` i
+`no-store`. Chrome mòbil arriba al login, comprova estàtics offline,
+represa automàtica i `/?recovery=1`, sense cache d'API ni paràmetres.
+Cap login amb contrasenya real ni consulta autenticada dels comptes en
+aquestes comprovacions. Migració local addicional des de la compilació
+anterior exacta: amb el worker antic i l'HTML antic encara en cache,
+`/?recovery=1` carrega el bundle nou i permet arribar al login; després
+s'accepta explícitament el worker nou, sense esborrar emmagatzematge.
+Resultat al Safari/PWA de l'iPhone real pendent
+de confirmació de l'usuari; no cal esborrar dades ni rotar secrets.
