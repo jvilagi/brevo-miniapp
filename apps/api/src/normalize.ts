@@ -16,6 +16,16 @@ export function normalizeQuota(account: unknown): Quota {
   const emailPlans = plans.map(object).filter((plan) =>
     plan && ['free', 'payAsYouGo', 'subscription', 'reseller'].includes(String(plan['type'])));
   const prepaid = emailPlans.filter((plan) => plan?.['type'] === 'payAsYouGo');
+  const subscription = emailPlans.filter(plan => plan?.['type'] === 'subscription');
+  // Els saldos mensual i de reserva són independents: mai se sumen ni es resten dels informes SMTP.
+  if (subscription.length === 1 && emailPlans.every(plan => ['subscription', 'payAsYouGo'].includes(String(plan?.['type']))) && prepaid.length <= 1) {
+    const monthly = subscription[0], backup = prepaid[0];
+    if (monthly?.['creditsType'] === 'sendLimit' && count(monthly['credits']) !== null &&
+      (!backup || backup['creditsType'] === 'sendLimit' && count(backup['credits']) !== null) &&
+      (count(monthly['credits']) !== 0 || !backup)) {
+      return { regime: 'subscription', available: count(monthly['credits'])!, dailyLimit: null, prepaidAvailable: backup ? count(backup['credits']) : null };
+    }
+  }
   const otherActive = emailPlans.some((plan) => plan?.['type'] !== 'payAsYouGo' && count(plan?.['credits']) !== 0);
   const candidate = prepaid.length === 1 && !otherActive ? prepaid[0] : emailPlans.length === 1 ? emailPlans[0] : null;
   const available = count(candidate?.['credits']);

@@ -11,6 +11,7 @@ runtime.env
 compose.env
 password.json
 account-names.json
+workspace.sealed.json
 access/
 .password-*.tmp
 .private-*.tmp

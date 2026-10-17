@@ -25,11 +25,14 @@ test('plans ambigus, saldos absents i valors invàlids queden desconeguts', () =
     { plan: [{ type: 'free', creditsType: 'sendLimit' }] },
     { plan: [{ type: 'free', creditsType: 'sendLimit', credits: -1 }] },
     { plan: [{ type: 'free', creditsType: 'sendLimit', credits: '285' }] },
-    { plan: [
-      { type: 'payAsYouGo', creditsType: 'sendLimit', credits: 10 },
-      { type: 'subscription', creditsType: 'sendLimit', credits: 20 },
-    ] },
+    { plan: [{ type: 'subscription', creditsType: 'sendLimit', credits: 20 }, { type: 'free', creditsType: 'sendLimit', credits: 10 }] },
   ]) assert.deepEqual(normalizeQuota(account), unknown);
+});
+test('subscripció i reserva es presenten per separat, sense sumar-les', () => {
+  assert.deepEqual(normalizeQuota({ plan: [{ type: 'subscription', creditsType: 'sendLimit', credits: 20 }, { type: 'payAsYouGo', creditsType: 'sendLimit', credits: 10 }] }),
+    { regime: 'subscription', available: 20, dailyLimit: null, prepaidAvailable: 10 });
+  assert.deepEqual(normalizeQuota({ plan: [{ type: 'subscription', creditsType: 'sendLimit', credits: 0 }] }),
+    { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: null });
 });
 
 test('no s’exposen dades personals, claus o camps no contractats', () => {

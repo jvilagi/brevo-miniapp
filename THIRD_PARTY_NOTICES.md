@@ -94,3 +94,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## web-push 3.6.7 (backend)
+
+Source: https://github.com/web-push-libs/web-push/tree/v3.6.7
+
+License: [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/). This dependency is not covered by the project’s PolyForm license. Its unmodified Source Code Form is included at node_modules/web-push/src in the Docker runtime and remains available under MPL-2.0 from the upstream release above. The upstream notice is preserved below and in node_modules/web-push/LICENSE.
+
+```text
+Copyright 2015 Marco Castelluccio
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+```

@@ -106,5 +106,13 @@ export async function registerAuth(app: FastifyInstance, config: { auth: AuthCon
       return { authenticated: false, configured: true } satisfies SessionResponse;
     } finally { changing = false; concurrentChecks--; }
   });
-  return { authenticated, sameOrigin };
+  const reauthenticate = async (request: FastifyRequest, password: string) => {
+    if (!authenticated(request)) return false;
+    if (Date.now() - windowStart >= 15 * 60_000) { windowStart = Date.now(); attempts = 0; }
+    if (++attempts > 30 || concurrentChecks >= 2 || changing) throw Object.assign(new Error('No disponible.'), { statusCode: 429 });
+    const checkedRevision = revision; concurrentChecks++;
+    try { return await verifyPassword(password, passwordHash!) && checkedRevision === revision && !changing && authenticated(request); }
+    finally { concurrentChecks--; }
+  };
+  return { authenticated, sameOrigin, reauthenticate };
 }

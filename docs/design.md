@@ -56,8 +56,13 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 
 - Comprovació de sessió, pantalla de contrasenya i errors d'accés.
 - «Configuració» al costat de «Canvia la contrasenya», sota les targetes:
-  dos noms editables, desament al servidor, cancel·lació i errors. Ubicació
-  i manteniment de l'estil actual aprovats el 2026-10-04.
+  ubicació i estil aprovats el 2026-10-04. Ampliació local aprovada el
+  2026-10-17: seccions Comptes/Avisos, llista ordenable i editor privat
+  de comptes, icones/colors, pla de referència, llindars, correu i push.
+  Galeria de sis icones pròpies i sis colors; només identitat del compte,
+  sense canviar la semàntica de colors de les mètriques.
+  Claus sempre emmascarades i no retornades, contrasenya per operacions
+  sensibles, confirmació de desconnexió i prova de correu amb cost.
 - Comptador discret al costat d'«Actualitza» (a sota al mòbil), amb segons,
   minuts, hores i dies; sense anuncis cada segon als lectors de pantalla.
   Mesura l'última consulta correcta, no l'edat de totes les dades Brevo.
@@ -69,7 +74,7 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
   d'activitat» i «Només consulta». Formulari centrat en una sola columna,
   amb amplada màxima de 440 px; marca, accés privat, avisos de seguretat
   i controls PWA preservats. Canvi desplegat el 2026-10-01.
-- Resum amb dues targetes, plegades inicialment. Un compte no obliga
+- Resum amb targetes per compte, plegades inicialment. Un compte no obliga
   a plegar l'altre. A l'escriptori van de costat; al mòbil, apilades.
 - Quota Free: saldo diari llegit de l'API i barra del disponible sobre
   300. Prepagament: saldo llegit de l'API, sense afegir quota Free ni
@@ -106,7 +111,7 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 
 ## Comprovacions
 
-- 6 proves de presentació: temps transcorregut, format català, desconeguts, Free/prepagament,
+- 10 proves de presentació/worker: temps transcorregut, format català, desconeguts, Free/prepagament/subscripció,
   saldo sense hora de reinici no verificada, escala i buits del gràfic,
   dades antigues i fus horari.
 - `scripts/check-ui.mjs`: Chrome real en mode headless, context mòbil
@@ -132,6 +137,14 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
   error de desament, títols actualitzats, lectura des d'una altra sessió.
   Comptador després d'un error, resposta tota antiga, parada en segon pla
   i recuperació del temps en tornar. Sense polling ni dades persistents.
+- Configuració ampliada: alta de tercer compte, ordre, desconnexió,
+  nom/icona/color, referència mensual i llindars, error de desament i
+  destinatari/compte/remitent d'avisos amb enviament desactivat.
+  Amplades 320–1280 sense desbordament; captures mòbils revisades.
+  Push, clic del worker i absència de dades privades provats amb dobles;
+  no equival a una entrega real ni a una prova d'iPhone.
+  Permís denegat, registre i baixa de dispositiu comprovats al navegador
+  amb PushManager simulat, sense contacte amb serveis push reals.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.

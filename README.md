@@ -1,6 +1,6 @@
 # Brevo MiniApp
 
-PWA de consulta de dos comptes Brevo, especialment pensada per a iPhone.
+PWA de consulta de comptes Brevo, especialment pensada per a iPhone.
 Targetes desplegables amb consum, saldo disponible, estadístiques
 transaccionals i gràfic dels últims set dies. Projecte independent,
 no oficial de Brevo, amb marca pròpia i paleta inspirada en la seva app.
@@ -23,8 +23,10 @@ npm ci --include=optional
 
 Segueix la [guia d'instal·lació](docs/installation.md) per crear
 `~/.config/brevo-miniapp/accounts.env`, **fora del repositori**, amb
-permisos `0600` i les dues API keys pròpies. La plantilla buida és
+permisos `0600` i les API keys inicials pròpies. La plantilla buida és
 [`deploy/accounts.env.example`](deploy/accounts.env.example).
+També pots començar sense claus i connectar-les després d'entrar, des
+del formulari privat de Configuració. En producció, sempre per HTTPS.
 
 Després, en un terminal interactiu:
 
@@ -39,7 +41,9 @@ amb aquesta contrasenya. L'API escolta al port 3000; els serveis locals
 no s'exposen a la xarxa. Atura'ls amb `Ctrl+C`. Els ports ocupats fan
 fallar l'arrencada, sense canviar de port automàticament.
 
-Les claus només les llegeix el backend. No les posis a `.env` dins del
+Les claus només les utilitza el backend. El formulari les transmet al
+servidor, no les torna a mostrar ni les desa al navegador.
+No les posis a `.env` dins del
 checkout, `VITE_*`, frontend, captures, logs o incidències de GitHub.
 `.env.example` enumera variables admeses, però no es carrega automàticament.
 Es poden indicar fitxers privats alternatius amb `BREVO_SECRETS_FILE`
@@ -56,8 +60,11 @@ han de viure fora del codi i de la imatge Docker.
   una recuperació de contrasenya oblidada; vegeu la guia d'instal·lació.
 - Memòria cau de dades de 60 segons al servidor; errors parcials i dades
   antigues identificades, fins a 15 minuts. Una dada absent no és zero.
-- «Configuració», sota les targetes, permet desar noms propis dels dos
-  comptes al servidor, compartits entre dispositius. No canvia res a Brevo.
+- «Configuració» permet connectar fins a 25 comptes, canviar-ne nom,
+  icona i color, ordenar-los i desconnectar-los només de la MiniApp.
+  El pla i el volum contractat manuals són una referència per als avisos,
+  no substitueixen el saldo retornat per Brevo ni compren crèdits.
+  Configuració privada xifrada al servidor, compartida entre dispositius.
   Al costat d'«Actualitza», un comptador mostra el temps des de l'última
   consulta correcta; no és l'edat de cada dada ni afegeix polling.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
@@ -68,10 +75,17 @@ han de viure fora del codi i de la imatge Docker.
   provenen de l'informe agregat, no de sumar dies.
 - Service worker només estàtic: no desa API, sessions o dades autenticades.
   Sense xarxa es mostra la interfície, no dades privades persistents.
-- Un únic fus horari per als dos comptes. El valor inicial `Etc/GMT-2`
+- Avisos de saldo baix o absència de dades fresques, per correu i push,
+  amb l'app tancada mentre el backend funciona. Cal habilitar-los amb
+  `ENABLE_NOTIFICATIONS=true` al servidor; per defecte no s'envia res.
+  Tries destinatari, compte Brevo que paga els correus i remitent actiu.
+  Les push no consumeixen crèdits Brevo. Requereixen permís del dispositiu;
+  a l'iPhone, app afegida a la pantalla d'inici (iOS 16.4 o posterior).
+- Un únic fus horari per a tots els comptes. El valor inicial `Etc/GMT-2`
   és GMT+2 fix; verifica el fus de Brevo abans de canviar-lo.
-- Model actual: dos comptes i una contrasenya compartida per instal·lació,
-  no un servei multiusuari. Claus introduïdes al servidor, no al navegador.
+- Una contrasenya compartida per instal·lació, no un servei multiusuari.
+  Connectar, substituir claus, desconnectar o desar avisos exigeix
+  confirmar la contrasenya actual. Cap clau es retorna des de l'API.
 
 ## Comprovacions
 
@@ -79,7 +93,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 45 proves (39 API + 6 presentació), compilació i separació
+Comprova tipus, 68 proves (58 API + 10 presentació/worker), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 
@@ -87,9 +101,11 @@ També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 configuració a [`apps/web/README.md`](apps/web/README.md). Chrome mòbil i
 escriptori verificats entre 320–1280 px, offline, represa i actualització
 controlada. Safari/iPhone real continua pendent; no es garanteix paritat.
+Les proves dels canals són simulades: no acrediten una entrega real de
+correu o push a l'iPhone. Consulta els límits i l'activació a la guia.
 
-`npm run notices:generate` regenera els avisos de les dependències del
-bundle del navegador després de canviar versions. Cal revisar les
+`npm run notices:generate` regenera els avisos del bundle del navegador
+i de web-push al backend després de canviar versions. Cal revisar les
 llicències abans de distribuir dependències actualitzades.
 
 ## Desplegament propi i iPhone

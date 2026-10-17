@@ -4,12 +4,13 @@ export interface HealthResponse {
 }
 
 export interface ApiError {
-  error: 'UNAUTHORIZED' | 'NOT_FOUND' | 'INTERNAL_ERROR' | 'BAD_REQUEST' | 'PAYLOAD_TOO_LARGE' | 'FORBIDDEN' | 'RATE_LIMITED' | 'AUTH_NOT_CONFIGURED' | 'CURRENT_PASSWORD_INCORRECT' | 'PASSWORD_CHANGE_UNAVAILABLE';
+  error: 'UNAUTHORIZED' | 'NOT_FOUND' | 'INTERNAL_ERROR' | 'BAD_REQUEST' | 'PAYLOAD_TOO_LARGE' | 'FORBIDDEN' | 'RATE_LIMITED' | 'AUTH_NOT_CONFIGURED' | 'CURRENT_PASSWORD_INCORRECT' | 'PASSWORD_CHANGE_UNAVAILABLE' | 'SETTINGS_CONFLICT' | 'BREVO_VALIDATION_FAILED';
 }
 
 export type Quota =
   | { regime: 'prepaid'; available: number; dailyLimit: null }
   | { regime: 'free'; available: number; dailyLimit: 300 }
+  | { regime: 'subscription'; available: number; dailyLimit: null; prepaidAvailable: number | null }
   | { regime: 'unknown'; available: null; dailyLimit: null };
 
 export const smtpMetrics = [
@@ -38,8 +39,10 @@ export interface DailyReport {
 }
 
 export interface AccountSnapshot {
-  id: '1' | '2';
+  id: string;
   name: string;
+  appearance?: Appearance;
+  reference?: PlanReference;
   source: 'brevo';
   quota: DataSection<Quota>;
   smtp: {
@@ -61,3 +64,24 @@ export interface AccountsResponse { generatedAt: string; accounts: AccountSnapsh
 export interface SessionResponse { authenticated: boolean; configured: boolean }
 export type AccountNames = Record<'1' | '2', string>;
 export interface AccountSettings { names: AccountNames }
+
+export const accountIcons = ['mail', 'home', 'work', 'school', 'heart', 'globe'] as const;
+export const accountColors = ['green', 'purple', 'blue', 'teal', 'amber', 'rose'] as const;
+export interface Appearance { icon: typeof accountIcons[number]; color: typeof accountColors[number] }
+export interface PlanReference { kind: 'auto' | 'free' | 'prepaid' | 'subscription'; allowance: number | null; renewalDay: number | null }
+export interface ManagedAccount {
+  id: string; name: string; appearance: Appearance; reference: PlanReference;
+  connected: boolean; lowBalance: number | null; lowPercent: number | null;
+}
+export interface EmailAlerts {
+  enabled: boolean; recipient: string; senderAccountId: string; senderId: number | null;
+  connectionErrors: boolean; repeatMinutes: number;
+}
+export interface AlertDelivery {
+  id: string; accountId: string | null; at: string; kind: 'alert' | 'test'; channel: 'email' | 'push'; status: 'pending' | 'accepted' | 'rejected' | 'uncertain';
+}
+export interface WorkspaceSettings {
+  revision: number; accounts: ManagedAccount[]; alerts: EmailAlerts; deliveries: AlertDelivery[]; deliveryEnabled: boolean;
+  pushEnabled: boolean; pushDevices: Array<{ id: string; label: string; createdAt: string }>;
+}
+export interface SenderOption { id: number; name: string; email: string }

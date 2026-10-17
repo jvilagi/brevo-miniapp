@@ -25,6 +25,8 @@ export function zoneLabel(timezone: string) {
     .find((part) => part.type === 'timeZoneName')?.value ?? timezone;
 }
 export function quotaPresentation(quota: Quota | null) {
+  if (quota?.regime === 'subscription') return { title: 'Saldo mensual', badge: 'Subscripció', available: quota.available, fraction: null,
+    source: 'Saldo de subscripció segons Brevo', note: quota.prepaidAvailable !== null ? `Reserva de prepagament: ${number(quota.prepaidAvailable)} crèdits. Brevo aplica primer la subscripció.` : 'Període del pla de Brevo; no es calcula restant les estadístiques SMTP.' };
   if (quota?.regime === 'prepaid') return { title: 'Crèdits disponibles', badge: 'Prepagament', available: quota.available, fraction: null,
     source: 'Saldo prepagament', note: 'Els crèdits substitueixen ara la quota Free.' };
   if (quota?.regime === 'free') return { title: 'Saldo disponible', badge: 'Free · 300/dia', available: quota.available,

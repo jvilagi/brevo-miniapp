@@ -1,7 +1,7 @@
 # Frontend
 
 Interfície React + TypeScript + Vite mobile-first, amb la paleta de Brevo
-demanada per en Jordi: entrada privada, dues targetes desplegables,
+demanada per en Jordi: entrada privada, targetes desplegables per compte,
 estadístiques Avui / Últims 7 dies i gràfic SVG accessible. PWA amb manifest
 standalone, icones 192/512 i apple-touch-icon 180. Detalls a
 [`../../docs/design.md`](../../docs/design.md).
@@ -24,10 +24,19 @@ amb actual/nova/confirmació. Cancel·lar el desmunta; els camps s'esborren
 abans d'enviar-los. Èxit esborra el tauler i torna a login, perquè totes
 les sessions s'han revocat. No és una recuperació de contrasenya oblidada.
 
-«Configuració», al costat, permet editar els dos noms amb desament al
-servidor. Cancel·lar descarta l'edició; errors conserven els camps, sessió
-caducada torna a login. Èxit actualitza els títols sense recarregar Brevo.
-Els noms no es desen en emmagatzematge persistent del navegador.
+«Configuració» té pestanyes Comptes i Avisos: comptes dinàmics (màxim 25),
+nom, icona/color propis, referència de pla i llindars, ordre i desconnexió.
+Claus i contrasenya són entrades transitòries i s'esborren abans d'enviar;
+mai es reomplen des del servidor. Errors conserven metadades editades,
+no secrets; `401` torna a login i `409` demana recarregar configuració.
+No es desa configuració en localStorage/sessionStorage.
+
+Avisos: destinatari, compte pagador i remitent actiu, repetició, push per
+dispositiu i historial per canal. El backend és qui monitoritza; no hi ha
+polling de quotes al navegador. La petició de permís push comença dins del
+gest de clic. PushManager desa la subscripció estàndard gestionada pel
+navegador, sense claus Brevo ni dades dels comptes. A l'iPhone cal la PWA
+de pantalla d'inici iOS 16.4+. Prova real en iPhone encara pendent.
 
 El comptador al costat d'«Actualitza» mesura temps des de l'última resposta
 vàlida amb almenys una secció fresca. Error de xarxa o resposta amb totes
@@ -45,6 +54,9 @@ consultes amb paràmetres o Authorization. Sense xarxa la interfície
 s'obre però no retorna dades privades. L'activació d'un worker nou
 requereix acceptar «Actualitza l'app»; no es recarrega automàticament
 mentre es consulta el tauler.
+El worker també gestiona push i clics: missatge genèric sense saldos o noms,
+enfoca l'app oberta o obre l'arrel del mateix origen. No consulta l'API ni
+desa notificacions en cache. Els permisos del sistema poden silenciar-les.
 
 `scripts/generate-icons.mjs` rasteritza l'SVG local en PNG amb Chrome.
 La versió pública utilitza el símbol propi de sobre amb distintiu violeta.
@@ -53,7 +65,7 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-6 proves de presentació incloses a `npm test`, inclosos el comptador i el saldo Free
+10 proves de presentació i worker incloses a `npm test`, inclosos el comptador i el saldo Free
 independent de les sol·licituds SMTP i sense hora de reinici inventada.
 La comprovació de navegador
 és separada: `npm run test:ui` compila i executa `scripts/check-ui.mjs`
@@ -75,6 +87,8 @@ npm run test:ui
 instal·lat i compatible. En aquest Mac (macOS 13), el runtime actual no
 permet instal·lar WebKit. Captures a `test-results/ui/`, excloses de Git.
 S'ha verificat Chrome entre 320 i 1280 px; Safari i iPhone real pendents.
+Les proves UI cobreixen alta, ordre, desconnexió, aparença, referències i
+avisos amb enviaments desactivats. No comproven cap entrega push real.
 
 Amb les mateixes variables de navegador, `npm run test:pwa` comprova
 manifest, dimensions de les icones, precache, absència de dades privades,

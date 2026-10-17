@@ -9,7 +9,7 @@ export class DataCache {
     if (!entry) {
       // Les dates formen part de les claus. Limitem també la retenció de períodes antics.
       for (const [id, item] of this.entries) if (!item.pending && this.now() - (item.updatedAt ?? item.failedAt ?? 0) > this.staleLimit) this.entries.delete(id);
-      if (this.entries.size >= 100) this.entries.delete(this.entries.keys().next().value!);
+      if (this.entries.size >= 500) this.entries.delete(this.entries.keys().next().value!);
       entry = {};
       this.entries.set(key, entry);
     }

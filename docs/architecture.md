@@ -6,7 +6,8 @@ les respostes reals dels dos comptes es va fer el mateix dia; vegeu
 
 ## Producte i interfície
 
-Una pantalla principal amb dues targetes, una per compte. Cada targeta
+Una pantalla principal amb una targeta per compte (dos inicials, fins a
+25 configurables en la versió local nova). Cada targeta
 mostra nom, enviaments d'avui, règim de quota, saldo disponible i barra
 de consum quan se'n conegui una referència vàlida.
 
@@ -43,12 +44,12 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 39 proves d'accés privat, sessions, canvi persistent de contrasenya,
+Hi ha 58 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
 límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 6 proves de presentació i la
+verificat amb els dos comptes reals. Hi ha 10 proves de presentació/worker i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
@@ -75,7 +76,41 @@ autenticats amb protecció d'origen, validació i límit de canvis. Dos noms
 persistents al servidor en `access/account-names.json`, separats del hash
 i de les claus. Prevalen sobre els noms inicials de l'entorn, es conserven
 en reiniciar i s'apliquen als snapshots encara que Brevo estigui en cache.
-No s'envien canvis a Brevo ni es desa configuració al navegador.
+No s'envien canvis de nom a Brevo ni es desa configuració al navegador.
+La nova configuració dinàmica importa aquests noms; el fitxer anterior
+només es conserva com a bootstrap i no es torna a escriure.
+
+## Configuració dinàmica i avisos (local, pendent de desplegar)
+
+Tasca aprovada el 2026-10-17: formulari privat de claus, comptes afegibles,
+referències de pla/volum, icones/colors i avisos per correu i push amb
+l'app tancada. Disseny Comptes/Avisos aprovat, estil existent preservat.
+
+`Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
+atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:
+backup conjunt i migració abans de rotar-lo. El primer desament importa
+els dos comptes existents sense tocar bootstrap, hash o noms anteriors.
+Les API keys noves entren per HTTPS amb sessió i contrasenya actual,
+es validen amb GET de Brevo i mai es retornen. Projecció pública de
+metadades i canvis amb revisió optimista. Un procés únic; sense rèpliques.
+La cache separa cada credencial per empremta privada i té concurrència GET
+limitada a quatre. Cap pla manual sobreescriu el saldo real.
+
+Monitor al backend cada 5 minuts, només amb `ENABLE_NOTIFICATIONS=true`.
+Lectura de quotes amb cache compartida, llindars de saldo fresc i avisos
+després d'almenys 15 minuts sense dades fresques. Incidents persistents,
+repetició explícita i reserva de registre abans d'enviar. Correus agrupats,
+màxim 20 intents/dia UTC, a destinatari i compte/remitent seleccionats.
+Només l'avís per correu autoritza POST a Brevo; no hi ha enviaments de
+campanyes. Brevo ja en comptabilitza el cost, no es resta al normalitzador.
+
+Push estàndard amb VAPID, subscripcions xifrades al servidor, permís del
+dispositiu i worker amb text genèric. No necessita crèdits Brevo; el correu
+pot fallar o esgotar el pressupost sense bloquejar aquest canal. A l'iPhone
+requereix iOS 16.4+ i instal·lació a la pantalla d'inici. Les subscripcions
+no caduquen amb el logout; revocació per dispositiu o gate global de servidor.
+Historial de 100 intents, no una prova d'entrega ni garantia exactly-once.
+Canals provats amb dobles, sense correus o push reals. iPhone real pendent.
 
 Comptador d'«Actualitza» des de l'última resposta vàlida amb alguna secció
 fresca, no des de la data de cada font. No es reinicia amb errors de xarxa
@@ -98,6 +133,8 @@ Base: `https://api.brevo.com`.
 | `GET /v3/smtp/statistics/reports` | Estadístiques transaccionals diàries | https://developers.brevo.com/reference/get-smtp-report |
 | `GET /v3/smtp/statistics/aggregatedReport` | Totals d'un període | https://developers.brevo.com/reference/get-aggregated-smtp-report |
 | `GET /v3/emailCampaigns` | Nombre de campanyes filtrades per data d'enviament; font separada | https://developers.brevo.com/reference/get-email-campaigns |
+| `GET /v3/senders` | Remitents actius del compte emissor d'avisos | https://developers.brevo.com/reference/get-senders |
+| `POST /v3/smtp/email` | Només avisos per correu configurats i proves explícites | https://developers.brevo.com/reference/send-transac-email |
 
 Els informes SMTP són transaccionals. No permeten assumir que s'ha
 comptabilitzat tot el consum d'un compte que també envia campanyes.
@@ -201,7 +238,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-45 proves de càlculs, accés i presentació, comprovació de tipus, aïllament
+68 proves de càlculs, accés, configuració, avisos, presentació i worker; comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

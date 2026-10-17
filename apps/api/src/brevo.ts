@@ -3,6 +3,7 @@ import { smtpMetrics } from '@brevo-miniapp/contracts';
 import { DataCache } from './cache.js';
 import { normalizeQuota, normalizeSmtpMetrics, sevenDayPeriod } from './normalize.js';
 import type { AccountConfig } from './private-config.js';
+import { createHash } from 'node:crypto';
 
 type JsonObject = Record<string, unknown>;
 function object(value: unknown): JsonObject {
@@ -11,9 +12,14 @@ function object(value: unknown): JsonObject {
 }
 export interface BrevoReader { get(apiKey: string, endpoint: string, query?: Record<string, string>): Promise<unknown> }
 export class BrevoClient implements BrevoReader {
+  private active = 0;
+  private waiting: Array<() => void> = [];
   constructor(private fetcher: typeof fetch = fetch) {}
   async get(apiKey: string, endpoint: string, query: Record<string, string> = {}): Promise<unknown> {
-    if (!['/v3/account', '/v3/smtp/statistics/aggregatedReport', '/v3/smtp/statistics/reports', '/v3/emailCampaigns'].includes(endpoint)) throw new Error('Endpoint no permès.');
+    if (!['/v3/account', '/v3/smtp/statistics/aggregatedReport', '/v3/smtp/statistics/reports', '/v3/emailCampaigns', '/v3/senders'].includes(endpoint)) throw new Error('Endpoint no permès.');
+    if (this.active >= 4) await new Promise<void>(resolve => this.waiting.push(resolve));
+    else this.active++;
+    try {
     const url = new URL(endpoint, 'https://api.brevo.com');
     url.search = new URLSearchParams(query).toString();
     const response = await this.fetcher(url, { method: 'GET', headers: { 'api-key': apiKey, accept: 'application/json' },
@@ -32,6 +38,7 @@ export class BrevoClient implements BrevoReader {
       }
       return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
     } finally { await reader.cancel(); }
+    } finally { const next = this.waiting.shift(); if (next) next(); else this.active--; }
   }
 }
 
@@ -94,12 +101,25 @@ function midnight(date: string, timezone: string): Date {
 
 export class AccountsService {
   private cache: DataCache;
-  constructor(private accounts: AccountConfig[], private timezone: string, private client: BrevoReader = new BrevoClient(),
+  constructor(private accounts: AccountConfig[] | (() => AccountConfig[]), private timezone: string, private client: BrevoReader = new BrevoClient(),
     private now: () => number = Date.now) { this.cache = new DataCache(now); }
   async snapshot(): Promise<AccountsResponse> {
     const now = new Date(this.now());
     const period = sevenDayPeriod(now, this.timezone);
-    return { generatedAt: now.toISOString(), accounts: await Promise.all(this.accounts.map((account) => this.account(account, period, now))) };
+    const accounts = typeof this.accounts === 'function' ? this.accounts() : this.accounts;
+    return { generatedAt: now.toISOString(), accounts: await Promise.all(accounts.map((account) => this.account(account, period, now))) };
+  }
+  async quotas() {
+    const accounts = typeof this.accounts === 'function' ? this.accounts() : this.accounts;
+    const today = sevenDayPeriod(new Date(this.now()), this.timezone).endDate;
+    return Promise.all(accounts.map(async account => ({ id: account.id, quota: await this.quota(account, today) })));
+  }
+  private namespace(account: AccountConfig) { return `${account.id}:${createHash('sha256').update(account.apiKey ?? '').digest('hex').slice(0, 16)}`; }
+  private quota(account: AccountConfig, day: string) {
+    return this.cache.get(`${this.namespace(account)}:${day}:quota`, async () => {
+      if (!account.apiKey) throw new Error('No disponible.');
+      return normalizeQuota(object(await this.client.get(account.apiKey, '/v3/account')));
+    });
   }
   private async account(account: AccountConfig, period: ReportPeriod, now: Date): Promise<AccountSnapshot> {
     const today = { ...period, startDate: period.endDate };
@@ -108,9 +128,9 @@ export class AccountsService {
       return this.client.get(account.apiKey, endpoint, query);
     };
     const query = { startDate: period.startDate, endDate: period.endDate };
-    const key = `${account.id}:${period.startDate}:${period.endDate}`;
+    const key = `${this.namespace(account)}:${period.startDate}:${period.endDate}`;
     const [quota, todayMetrics, totals, rawDaily, campaigns] = await Promise.all([
-      this.cache.get(`${account.id}:${period.endDate}:quota`, async () => normalizeQuota(object(await request('/v3/account')))),
+      this.quota(account, period.endDate),
       this.cache.get(`${key}:today`, async () => metrics(await request('/v3/smtp/statistics/aggregatedReport', { startDate: today.startDate, endDate: today.endDate }))),
       this.cache.get(`${key}:totals`, async () => metrics(await request('/v3/smtp/statistics/aggregatedReport', query))),
       this.cache.get(`${key}:daily`, async () => dailyReport(await request('/v3/smtp/statistics/reports', query), period)),

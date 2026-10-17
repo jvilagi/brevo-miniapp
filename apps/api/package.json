@@ -11,5 +11,15 @@
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
     "test": "node --import tsx --test test/*.test.ts"
   },
-  "dependencies": { "@brevo-miniapp/contracts": "0.1.0", "fastify": "5.12.5", "@fastify/static": "10.1.5", "@fastify/cookie": "11.1.2", "@fastify/rate-limit": "11.2.0" }
+  "dependencies": {
+    "@brevo-miniapp/contracts": "0.1.0",
+    "@fastify/cookie": "11.1.2",
+    "@fastify/rate-limit": "11.2.0",
+    "@fastify/static": "10.1.5",
+    "fastify": "5.12.5",
+    "web-push": "3.6.7"
+  },
+  "devDependencies": {
+    "@types/web-push": "3.6.4"
+  }
 }

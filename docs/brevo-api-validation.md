@@ -31,6 +31,22 @@ Brevo, sense prometre una hora ni forçar-lo a 300 perquè avui no hi hagi
 sol·licituds SMTP. Un retard o una diferència d'horari són hipòtesis,
 no causes acreditades retrospectivament.
 
+Revisió del 2026-10-17 per als comptes configurables: nou GET real dels dos
+plans existents, sense desar payloads complets ni valors personals. Es
+manté el patró de prepagament amb entrada de subscripció zero al primer
+compte i Free al segon. No s'ha observat una transició de règim ni un
+pla de subscripció mensual positiu en aquests comptes.
+
+La documentació de [Get account](https://developers.brevo.com/reference/get-account)
+defineix `plan[].credits` com a saldo restant i `planVerticals.credits`
+com a crèdits assignats: no són intercanviables. La nova versió reconeix
+una única subscripció amb `creditsType=sendLimit` i saldo vàlid; si també
+hi ha una reserva prepagament vàlida, es mostra separadament. No se sumen
+els saldos. Subscripció zero amb reserva conserva el règim prepagament
+ja verificat; combinacions conflictives queden desconegudes.
+El dia de renovació introduït manualment és només una referència, no
+una data acreditada de l'API ni una regla per restablir saldo.
+
 ## Estadístiques
 
 - SMTP i campanyes són fonts separades. Els informes transaccionals no
@@ -52,6 +68,17 @@ no causes acreditades retrospectivament.
 La integració GET autenticada, els cinc blocs de dades per compte, les
 set dates, errors parcials i reutilització de cache s'han comprovat.
 No s'han enviat emails ni modificat recursos Brevo durant la validació.
+
+## Avisos: endpoints d'escriptura explícita
+
+Documentació revisada el 2026-10-17:
+[Get senders](https://developers.brevo.com/reference/get-senders) retorna
+`id`, `name`, `email` i `active`; el selector només admet remitents actius
+del compte triat. [Send transactional email](https://developers.brevo.com/reference/send-transac-email)
+admet `sender.id` i destinatari explícit, amb `htmlContent`/`textContent`.
+El backend només considera `201` com a acceptació; no acredita entrega.
+POST limitat als avisos habilitats i proves confirmades, mai a campanyes.
+Les proves injecten emissors simulats: no s'ha validat cap enviament real.
 
 ## Fonts oficials
 

@@ -2,8 +2,10 @@
 
 Cada instal·lació té les seves claus Brevo i la seva contrasenya. No
 utilitza els comptes de l'autor ni envia les teves claus a la seva app.
-La interfície no té un formulari per introduir claus: només les llegeix
-el backend des de fitxers privats o variables del seu entorn.
+Les claus inicials es poden preparar en un fitxer privat. Després d'entrar,
+Configuració també permet connectar o substituir claus amb un formulari
+privat. Només el backend les utilitza per parlar amb Brevo; el formulari
+no les desa al navegador ni les torna a mostrar.
 
 Aquesta guia cobreix desenvolupament local a macOS/Linux. Requereix
 Git, Node.js 24 LTS i npm. Windows natiu no està verificat; els permisos
@@ -35,8 +37,9 @@ Consulta les [instruccions oficials de Brevo](https://developers.brevo.com/docs/
 
 Utilitza claus API REST, no claus SMTP ni tokens del servidor MCP.
 No les comparteixis en xats, incidències de GitHub, captures o logs.
-La MiniApp només consulta dades amb GET, però això no converteix la
-credencial Brevo en una clau limitada a lectura: protegeix-la com una
+La consulta de dades utilitza GET. Si actives avisos per correu, el backend
+també envia aquests correus amb POST des del compte que triïs. Això no
+converteix la credencial en una clau limitada a lectura: protegeix-la com una
 contrasenya i revisa els permisos disponibles al teu compte.
 
 ## 3. Preparar el fitxer privat fora del repositori
@@ -78,6 +81,11 @@ No copiïs aquesta plantilla a `.env` dins del projecte: el backend no
 carrega automàticament aquest fitxer i rebutja fitxers privats dins del
 checkout. No editis la plantilla versionada amb claus reals. Tampoc
 les posis a `apps/web`, `public`, el manifest o variables `VITE_*`.
+
+Alternativa: pots deixar les claus buides o no crear `accounts.env` en
+desenvolupament. Després de configurar l'accés, entra a Configuració i
+edita els comptes inicials per connectar-los, o afegeix-ne un de nou.
+El Compose d'exemple sí que exigeix el fitxer muntat, encara que sigui buit.
 
 ## 4. Crear la contrasenya de la teva MiniApp
 
@@ -142,25 +150,84 @@ La primera resposta ha de tenir `status: "ok"`; la segona ha de mostrar
 cada targeta mostra el saldo i l'activitat del compte que esperes.
 No és necessari imprimir cap clau ni la resposta completa de Brevo.
 
-## Personalitzar els noms
+## Configurar comptes, pla i aparença
 
 Després d'entrar, prem **Configuració**, al costat de **Canvia la
-contrasenya** sota les targetes. Escriu els dos noms (1–100 caràcters)
-i prem **Desa els noms**. Es comparteixen entre dispositius d'aquesta
-instal·lació, sense canviar el nom dels comptes a Brevo. Cancel·lar
-no desa. Als altres dispositius, prem Actualitza per veure'ls.
+contrasenya** sota les targetes. A **Comptes** pots editar el nom
+(1–100 caràcters), triar una de sis icones pròpies i sis colors, ordenar,
+connectar o desconnectar comptes (màxim 25). No es modifica el compte
+a Brevo. «Desconnecta» només el retira d'aquesta MiniApp; si era l'emissor
+dels correus d'avís, aquests es desactiven.
 
-Es desen a `access/account-names.json`, per defecte al mateix directori
-que `password.json`, amb permisos `0600` i directori `0700`, fora del
-repositori. `ACCOUNT_NAMES_FILE` permet una ruta absoluta alternativa
-privada. El fitxer desat preval sobre els noms inicials de l'entorn en
-reiniciar. Conserva'l entre versions i en les còpies privades; no editis
-el JSON mentre s'executa el backend. Un fitxer invàlid o amb permisos
-insegurs fa fallar l'arrencada, no restaura noms per defecte.
+Connectar o substituir una clau exigeix la contrasenya actual de la
+MiniApp i valida la clau amb un GET de Brevo abans de desar-la. Desconnectar
+també exigeix contrasenya i confirmació. Una clau desada mai es recupera
+amb GET. Cancel·lar descarta l'edició; les dades es comparteixen amb altres
+dispositius en la pròxima lectura. Un conflicte de revisió demana recarregar.
+
+El **pla contractat**, el **volum** i el **dia de renovació** manuals són
+referències teves, no una compra ni una modificació del pla real. Defineix
+llindars de saldo absolut o percentatge del volum configurat; el percentatge
+requereix un volum positiu. El saldo sempre prové de Brevo: mai `300 - enviats`.
+La subscripció i la reserva prepagament es presenten separadament, no sumades.
+
+La configuració, les claus i les subscripcions push es desen xifrades amb
+AES-256-GCM a `access/workspace.sealed.json` (`0600`, directori `0700`),
+fora del checkout. `WORKSPACE_SETTINGS_FILE` permet una ruta alternativa.
+El primer desament importa els dos comptes i els noms anteriors; no
+sobreescriu `accounts.env`, `auth.env` ni `account-names.json`. A partir
+d'aleshores preval el fitxer nou: rota les claus des de Configuració,
+no modificant només el fitxer inicial.
+
+Conserva còpies privades del fitxer xifrat **i del `SESSION_SECRET` original**:
+la clau de xifrat se'n deriva. Canviar la contrasenya de la MiniApp no afecta
+el xifrat; rotar el secret de sessió exigeix una migració administrativa
+abans de reiniciar, o no es podrà llegir la configuració. No hi ha una
+comanda de migració distribuïda. No eliminis el fitxer per «arreglar» un
+error: un fitxer invàlid impedeix arrencar i no restaura el bootstrap.
 
 El comptador d'Actualitza indica el temps des de la consulta correcta,
 no l'edat de cada dada de Brevo. Les dates i avisos de cada secció
 continuen sent la referència per a dades antigues o en cache.
+
+## Avisos per correu i notificacions push
+
+Per defecte **no s'envia res**. Configura primer els llindars de cada
+compte i la pestanya **Avisos**. Quan vulguis activar el servei, estableix
+`ENABLE_NOTIFICATIONS=true` a l'entorn privat del backend i recrea'l.
+Aquest interruptor habilita els dos canals; posar-lo a `false` i recrear
+el backend els atura. No és una automatització del navegador: necessita
+el servidor en funcionament, encara que tanquis l'app.
+
+- **Correu:** tria destinatari, compte Brevo que paga l'enviament i un
+  remitent actiu obtingut d'aquell compte. Confirma la contrasenya per
+  desar. Cada correu acceptat es comptabilitza a Brevo en aquell compte;
+  la MiniApp no el descompta de nou. Sense saldo o remitent vàlid pot fallar.
+- **Push:** a cada dispositiu prem «Activa en aquest dispositiu» i dona
+  permís. A l'iPhone requereix iOS 16.4 o posterior i obrir la MiniApp
+  afegida a la pantalla d'inici, no només una pestanya de Safari.
+  Les push no consumeixen crèdits Brevo i només mostren un missatge genèric,
+  sense noms ni saldos a la pantalla bloquejada. Pots desactivar aquell
+  dispositiu amb el mateix control. [Requisits oficials de WebKit](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/).
+- **Prova:** «Envia una prova als canals actius» requereix contrasenya i
+  confirmació, i utilitza la configuració ja desada. Si el correu és actiu,
+  la prova també el carrega al compte emissor. Revisa l'historial per canal.
+
+El backend comprova el saldo cada 5 minuts. El llindar només s'avalua amb
+dades fresques conegudes; una dada absent no és zero. L'avís de connexió
+requereix almenys 15 minuts sense dades fresques observats pel monitor.
+Els incidents es dedupliquen i agrupen en un correu; la repetició és
+configurable (1 hora–7 dies). Màxim 20 intents de correu per dia UTC,
+incloses proves i errors, amb comptador persistent independent de l'historial.
+Esgotar aquest límit o fallar el correu no atura les push.
+
+L'historial conserva 100 intents (en mostra 20). «Acceptat» és acceptació
+pel servei, no entrega confirmada. Un timeout o una aturada pot deixar
+un estat incert/pendent: no es reenvia immediatament, però no es garanteix
+exactament una entrega. Un enviament ja en curs no es pot cancel·lar.
+El sistema operatiu pot retardar o silenciar push. La verificació real
+en iPhone i l'entrega real de correu continuen pendents; les proves del
+projecte utilitzen emissors i serveis simulats, sense càrrecs.
 
 ## Opcions i errors habituals
 
@@ -173,13 +240,13 @@ continuen sent la referència per a dades antigues o en cache.
 - **Port ocupat:** allibera els ports 5174/3000 de forma segura; la
   comanda no es desplaça automàticament a un altre port.
 - **Fus horari:** el valor inicial `Etc/GMT-2` representa GMT+2 fix,
-  no el canvi d'hora europeu. Verifica el fus dels teus dos comptes.
-  L'app utilitza un únic fus configurat per a tots dos.
+  no el canvi d'hora europeu. Verifica el fus dels teus comptes.
+  L'app utilitza un únic fus configurat per a tots.
 - **Noms inicials dels comptes:** opcionalment, inicia amb
   `BREVO_ACCOUNT_1_NAME="Personal" BREVO_ACCOUNT_2_NAME="Altres" npm run dev`.
   Són noms, no secrets. El backend no llegeix els noms d'`accounts.env`.
   Si s'han desat des de l'app, tenen prioritat sobre aquests noms inicials.
-- **Altres ubicacions:** `BREVO_SECRETS_FILE`, `AUTH_SECRETS_FILE`, `AUTH_PASSWORD_FILE` i `ACCOUNT_NAMES_FILE`
+- **Altres ubicacions:** `BREVO_SECRETS_FILE`, `AUTH_SECRETS_FILE`, `AUTH_PASSWORD_FILE`, `ACCOUNT_NAMES_FILE` i `WORKSPACE_SETTINGS_FILE`
   permeten camins absoluts privats fora del checkout. `setup:auth` sempre
   crea el seu fitxer a la ubicació per defecte; no segueix aquestes opcions.
 

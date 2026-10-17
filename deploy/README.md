@@ -15,13 +15,14 @@ Exemple de disposició, fora del checkout de les versions:
   releases/<id>/   Codi sense secrets
   src -> releases/<id>
   private/        0700, propietari uid 1000
-    accounts.env  0600, dues API keys pròpies
+    accounts.env  0600, claus pròpies inicials (pot ser buit)
     auth.env      0600, hash i secret de sessió
     runtime.env   0600, origen/fus/noms
     compose.env   0600, directori privat i identificador de versió
     access/       0700, propietari uid 1000, muntatge separat d'escriptura
       password.json  0600, hash actual després d'un canvi des de l'app
       account-names.json  0600, noms propis després de desar-los des de l'app
+      workspace.sealed.json  0600, comptes i avisos xifrats de la configuració nova
   caddy/site.conf
 ```
 
@@ -38,15 +39,30 @@ Només aquest directori té muntatge d'escriptura a `/run/private-auth`;
 fitxers del contenidor segueix readonly. `AUTH_PASSWORD_FILE` apunta al
 hash persistent d'aquest directori. No copiïs un hash canviat al release.
 `ACCOUNT_NAMES_FILE` apunta també a aquest muntatge, en un fitxer separat.
-No cal crear els dos JSON abans d'arrencar: es creen en desar des de l'app.
+`WORKSPACE_SETTINGS_FILE` apunta també al directori d'escriptura.
+No cal crear els JSON abans d'arrencar: es creen en desar des de l'app.
 Conserva tot el directori entre versions; els noms desats prevalen sobre
 els de `runtime.env`. Una versió anterior als noms personalitzables els
 ignoraria fins a tornar a una versió compatible.
+
+La configuració nova importa els comptes i noms existents en el primer
+desament; després preval `workspace.sealed.json`. No substitueix el hash
+ni escriu als fitxers muntats readonly. Conserva una còpia privada del
+fitxer xifrat i de l'`auth.env` amb el `SESSION_SECRET` original: el xifrat
+en depèn. No rotis aquest secret sense una migració administrativa prèvia.
+Canviar la contrasenya des de l'app no el modifica.
 
 Copia `runtime.env.example` fora del checkout com a `private/runtime.env`:
 defineix **el teu** `PUBLIC_ORIGIN=https://el-teu-domini` sense barra final,
 verifica `BREVO_TIMEZONE` i posa noms propis als comptes. Producció no
 té un domini per defecte. Les claus van a `accounts.env`, no a runtime.
+Per als comptes afegits des del formulari, les claus van al magatzem xifrat.
+`ENABLE_NOTIFICATIONS=false` és el valor inicial. Per activar correu i
+push, configura canals i llindars a l'app, posa'l a `true` en aquest fitxer
+privat i recrea el servei. Requereix sortida HTTPS a Brevo i serveis push
+Google/Mozilla/Apple. El monitor funciona cada 5 minuts amb el backend
+actiu; no depèn del navegador ni d'un cron extern. Aturar els canals no
+cancel·la enviaments ja en curs.
 
 `compose.env` conté només `BREVO_PRIVATE_DIR` (camí absolut de `private`)
 i `BREVO_RELEASE` (tag de la versió). No utilitzis un camí amb salts de
@@ -133,8 +149,18 @@ i recuperaria l'accés inicial. Conserva el directori d'accés entre
 versions i usa només versions compatibles, o prepara una migració
 administrativa privada revisada abans de fer el retorn.
 
-Per rotar claus, guarda una còpia privada, substitueix la credencial al
-fitxer privat i recrea el servei amb `--force-recreate --wait` (els mounts
+Després d'editar comptes amb la configuració nova, una imatge anterior
+ignoraria el fitxer xifrat, tornaria als dos comptes inicials i no tindria
+els avisos. No despleguis un rollback d'aquest tipus sense revisar abans
+quines credencials i metadades carregaria. Preserva el fitxer xifrat i el
+secret original; no esborres configuració per intentar tornar enrere.
+
+Per rotar claus després de crear el magatzem xifrat, utilitza **Configuració**
+amb la contrasenya actual: el backend valida i desa la nova clau. Comprova
+les dades abans de revocar l'anterior. Canviar només `accounts.env` ja no
+substitueix les claus del magatzem xifrat. Abans de la primera migració,
+guarda una còpia privada, substitueix la credencial al fitxer inicial i
+recrea el servei amb `--force-recreate --wait` (els mounts
 poden conservar l'inode anterior); comprova les dades abans de revocar
 la clau anterior. No comparteixis la clau o hash en una incidència.
 

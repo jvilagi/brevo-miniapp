@@ -8,7 +8,7 @@ import { readStoredPassword } from './password-store.js';
 import { readAccountNames } from './account-names.js';
 
 export interface AuthConfig { passwordHash: string; sessionSecret: string }
-export interface AccountConfig { id: '1' | '2'; name: string; apiKey: string | null }
+export interface AccountConfig { id: string; name: string; apiKey: string | null }
 export interface PrivateConfig {
   auth: AuthConfig | null;
   accounts: AccountConfig[];
@@ -17,6 +17,8 @@ export interface PrivateConfig {
   production: boolean;
   passwordFile?: string;
   accountNamesFile?: string;
+  workspaceFile?: string;
+  emailDeliveryEnabled?: boolean;
 }
 
 export async function readPrivateEnv(path: string, optional = false): Promise<NodeJS.ProcessEnv> {
@@ -64,8 +66,10 @@ export async function loadPrivateConfig(env: NodeJS.ProcessEnv = process.env): P
   return {
     auth: passwordHash && sessionSecret ? { passwordHash, sessionSecret } : null,
     accounts: (['1', '2'] as const).map((id) => ({ id,
-      name: names?.[id] ?? (env[`BREVO_ACCOUNT_${id}_NAME`] ?? `Compte ${id}`).slice(0, 100),
-      apiKey: env[`BREVO_ACCOUNT_${id}_API_KEY`] ?? accountsEnv[`BREVO_ACCOUNT_${id}_API_KEY`] ?? null,
+      name: names?.[id] ?? (env[`BREVO_ACCOUNT_${id}_NAME`]?.trim() || `Compte ${id}`).slice(0, 100),
+      apiKey: (env[`BREVO_ACCOUNT_${id}_API_KEY`] ?? accountsEnv[`BREVO_ACCOUNT_${id}_API_KEY`]) || null,
     })), origin, timezone, production, passwordFile, accountNamesFile,
+    workspaceFile: env['WORKSPACE_SETTINGS_FILE'] ?? join(dirname(passwordFile), 'workspace.sealed.json'),
+    emailDeliveryEnabled: env['ENABLE_NOTIFICATIONS'] === 'true',
   };
 }

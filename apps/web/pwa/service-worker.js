@@ -23,6 +23,20 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
+self.addEventListener('push', event => {
+  // Missatge genèric: mai saldos, claus ni noms privats a la pantalla bloquejada.
+  event.waitUntil(self.registration.showNotification('MiniApp · Avís dels comptes', {
+    body: 'Obre la MiniApp per consultar els avisos pendents.', icon: '/icons/icon-192.png', tag: 'miniapp-alert', data: { path: '/' },
+  }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const url = new URL('/', self.location.origin).href;
+    for (const client of await self.clients.matchAll({ type: 'window' })) if (client.url.startsWith(self.location.origin + '/') && 'focus' in client) { await client.focus(); return; }
+    await self.clients.openWindow(url);
+  })());
+});
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);

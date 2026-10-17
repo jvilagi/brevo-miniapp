@@ -27,7 +27,7 @@ async function privateDirectory(file: string) {
   const info = await lstat(dirname(file));
   if (!info.isDirectory() || info.uid !== process.getuid?.() || (info.mode & 0o077)) throw failure();
 }
-export async function readPrivateJson<T>(file: string, validate: (value: unknown) => T): Promise<T | null> {
+export async function readPrivateJson<T>(file: string, validate: (value: unknown) => T, limit = 1024): Promise<T | null> {
   try {
     await location(file);
     try { await privateDirectory(file); } catch (error) { if (absent(error)) return null; throw error; }
@@ -36,21 +36,21 @@ export async function readPrivateJson<T>(file: string, validate: (value: unknown
     catch (error) { if (absent(error)) return null; throw error; }
     try {
       const info = await handle.stat();
-      if (!info.isFile() || info.uid !== process.getuid?.() || (info.mode & 0o077) || info.size > 1024) throw failure();
+      if (!info.isFile() || info.uid !== process.getuid?.() || (info.mode & 0o077) || info.size > limit) throw failure();
       return validate(JSON.parse(await handle.readFile('utf8')));
     } finally { await handle.close(); }
   } catch { throw failure(); }
 }
-export async function writePrivateJson<T>(file: string, value: T, validate: (value: unknown) => T): Promise<void> {
+export async function writePrivateJson<T>(file: string, value: T, validate: (value: unknown) => T, limit = 1024): Promise<void> {
   let temporary: string | null = null;
   try {
     const content = JSON.stringify(validate(value)) + '\n';
-    if (Buffer.byteLength(content) > 1024) throw failure();
+    if (Buffer.byteLength(content) > limit) throw failure();
     await location(file);
     try { await mkdir(dirname(file), { mode: 0o700 }); }
     catch (error) { if (!(error && typeof error === 'object' && 'code' in error && error.code === 'EEXIST')) throw error; }
     await privateDirectory(file);
-    await readPrivateJson(file, validate);
+    await readPrivateJson(file, validate, limit);
     temporary = join(dirname(file), `.private-${randomBytes(16).toString('hex')}.tmp`);
     const handle = await open(temporary, 'wx', 0o600);
     try { await handle.writeFile(content); await handle.sync(); } finally { await handle.close(); }

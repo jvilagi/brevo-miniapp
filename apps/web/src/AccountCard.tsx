@@ -20,10 +20,10 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
   const selected = period === 'today' ? smtp.today.report : smtp.totals;
   const detailsId = `account-${account.id}-details`;
   const dailyStatus = sectionStatus(smtp.daily, locallyStale);
-  return <article className={`account-card account-${account.id}`} aria-labelledby={`account-${account.id}-name`}>
+  return <article className={`account-card account-${account.id} color-${account.appearance?.color ?? (account.id === '2' ? 'purple' : 'green')}`} aria-labelledby={`account-${account.id}-name`}>
     <div className="account-heading">
-      <div className="account-title"><span className="account-icon"><Icon name="mail"/></span><div>
-        <span className="eyebrow">COMPTE {account.id}</span><h2 id={`account-${account.id}-name`}>{account.name}</h2>
+      <div className="account-title"><span className="account-icon"><Icon name={account.appearance?.icon ?? 'mail'}/></span><div>
+        <span className="eyebrow">COMPTE BREVO</span><h2 id={`account-${account.id}-name`}>{account.name}</h2>
       </div></div><span className={`plan-badge ${quota.data?.regime === 'unknown' || !quota.data ? 'is-unknown' : ''}`}>{info.badge}</span>
     </div>
     <div className="account-numbers">
@@ -39,6 +39,8 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
       <span style={{ width: `${info.fraction * 100}%` }}/>
     </div>}
     <div className="account-note">{info.note}</div>
+    {account.reference && (account.reference.kind !== 'auto' || account.reference.allowance !== null) && <p className="reference-note">Referència manual: {({ auto: 'automàtic', free: 'Free', prepaid: 'prepagament', subscription: 'subscripció' })[account.reference.kind]}
+      {account.reference.allowance !== null && ` · ${number(account.reference.allowance)} emails/crèdits contractats`}{account.reference.renewalDay && ` · renovació dia ${account.reference.renewalDay}`}. No modifica el saldo de Brevo.</p>}
     <button type="button" className="expand-button" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen(!open)}>
       <span>{open ? 'Amaga les estadístiques' : 'Estadístiques i evolució'}</span><Icon name="chevron" className={open ? 'is-open' : ''}/>
     </button>

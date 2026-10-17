@@ -28,6 +28,7 @@ services:
       AUTH_SECRETS_FILE: /run/secrets/brevo-auth.env
       AUTH_PASSWORD_FILE: /run/private-auth/password.json
       ACCOUNT_NAMES_FILE: /run/private-auth/account-names.json
+      WORKSPACE_SETTINGS_FILE: /run/private-auth/workspace.sealed.json
     volumes:
       - type: bind
         source: ${BREVO_PRIVATE_DIR}/accounts.env

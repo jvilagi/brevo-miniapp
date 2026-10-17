@@ -1,6 +1,6 @@
 # Estat del projecte
 
-Actualització: 2026-10-04, Europe/Madrid.
+Actualització: 2026-10-17, Europe/Madrid.
 
 ## Implementat
 
@@ -160,3 +160,70 @@ claus i bootstrap readonly, sistema de fitxers del contenidor readonly.
 Caddy, DNS i serveis aliens no modificats. El reinici revoca les sessions,
 no canvia la contrasenya. Cal una lectura als altres dispositius per veure
 els noms nous; sense push ni sincronització entre múltiples processos.
+
+## Recuperació administrativa de l'accés
+
+2026-10-13: recuperació al servidor autoritzada pel responsable de la
+instal·lació. Nova contrasenya introduïda dues vegades en diàlegs locals
+amb entrada oculta; només el hash scrypt s'ha desat al fitxer persistent
+privat, amb permisos `0600`. Còpia privada del hash anterior conservada.
+Claus Brevo, bootstrap, secret de sessió i noms dels comptes intactes.
+El hash recuperat preval sobre el bootstrap; no s'ha d'eliminar per
+restablir l'accés ni retornar a una versió que l'ignori.
+
+Reinici només de la MiniApp, mateixa versió i contenidor saludable.
+Sessions anteriors revocades. Entrada amb la nova contrasenya verificada
+per HTTPS (`200`), sessió de prova tancada i revocació confirmada. Cap
+consulta de dades Brevo ni contrasenya en text pla desada o mostrada.
+La comprovació inicial de logout es va corregir perquè enviava una
+capçalera JSON sense cos; la verificació final completa ha passat.
+
+Operació administrativa puntual amb eines locals excloses de Git,
+no una funcionalitat de recuperació pública ni un reset distribuït.
+Aquesta nota és local: no s'ha publicat ni desplegat cap canvi de codi.
+
+## Configuració ampliada i avisos — només local
+
+2026-10-17, tasca aprovada amb GPT-6.1 Sol / Extra High. Decisions:
+comptes dinàmics, pla/volum com a referència sense alterar saldo API,
+formulari privat de claus, galeria d'icones/colors i seccions Comptes/Avisos.
+Confirmats els dos canals amb l'app tancada: correu i push. El compte
+Brevo que assumeix el correu és seleccionable, amb remitent actiu.
+
+Implementats fins a 25 comptes: crear, editar, ordenar i desconnectar
+només de MiniApp, sense eliminar comptes Brevo. Metadades, claus,
+subscripcions push i historial en fitxer privat xifrat AES-256-GCM,
+escriptura atòmica, revisions concurrents i reautenticació sensible.
+Importació inicial dels comptes/noms existents, bootstrap i hash intactes.
+La clau de xifrat depèn del secret de sessió original: backup conjunt,
+no rotar-lo sense migració. No hi ha eina de migració distribuïda.
+
+Monitor backend cada 5 minuts, saldo baix fresc o 15 minuts sense dades,
+deduplicació durable, repetició configurable i màxim 20 intents de correu
+per dia UTC. Registre pendent abans d'enviar, errors sense secrets i
+historial per canal; acceptació no garanteix entrega. Correu atribuït
+al compte triat, sense doble descompte. Push genèriques sense saldo o noms,
+independents d'errors/pressupost de correu, VAPID i baixa de dispositiu.
+`ENABLE_NOTIFICATIONS=false` per defecte: no s'envia res sense activació.
+
+Documentació oficial de Brevo/WebKit i biblioteca web-push consultada.
+GET real de plans dels dos comptes comprovat sense desar payloads complets,
+identificadors ni saldos en documentació. Subscripció i reserva separades;
+el patró existent amb subscripció zero i prepagament continua com prepagament.
+No es dedueix Free amb saldo zero ni es calcula `300 - enviats`.
+
+68 proves (58 API + 10 presentació/worker), tipus, compilació i separació
+de secrets superats. Chrome UI/PWA amb dades sintètiques: comptes dinàmics,
+aparença, pla i llindars, avisos sense enviament real, regressions d'accés,
+contrasenya, comptador, offline i worker. Amplades 320–1280 verificades.
+Correus i push provats amb emissors simulats: cap càrrec ni enviament real.
+Registre i baixa del dispositiu i permís denegat comprovats amb PushManager
+simulat al navegador. Avisos de llicència de web-push (MPL-2.0) preservats,
+separats de la llicència del codi propi.
+Pendent entrega real per canal, Safari/iPhone instal·lat i verificació Linux
+de la nova persistència abans de desplegar. Documentació d'instal·lació,
+seguretat i retorn de versió actualitzada.
+
+No publicat ni desplegat. Producció, contrasenya recuperada, secrets,
+comptes, Caddy i DNS no modificats per aquesta tasca. Cal aprovació per
+publicar/desplegar i configurar l'activació real dels avisos.

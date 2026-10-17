@@ -1,11 +1,15 @@
 // Dades exclusivament sintètiques; no es llegeix cap fitxer privat.
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { buildApp } from '../apps/api/dist/app.js';
 import { hashPassword } from '../apps/api/dist/password.js';
 import { normalizeSmtpMetrics } from '../apps/api/dist/normalize.js';
+import { Workspace } from '../apps/api/dist/workspace.js';
+import { generatePushKeys } from '../apps/api/dist/push-alerts.js';
 
 const { chromium, webkit } = await import(process.env['PLAYWRIGHT_MODULE_PATH'] ?? 'playwright');
 const directory = fileURLToPath(new URL('../test-results/ui/', import.meta.url));
@@ -36,9 +40,12 @@ function contrast(a, b) {
   return (values[0] + .05) / (values[1] + .05);
 }
 async function verify(browserType, label, executablePath) {
-  const testConfig = { ...config };
+  const temporary = await mkdtemp(join(tmpdir(), 'brevo-ui-workspace-'));
+  const testConfig = { ...config, workspaceFile: join(temporary, 'workspace.sealed.json'), accounts: ['1', '2'].map(id => ({ id, name: `Compte ${id}`, apiKey: `synthetic-credential-${id}-only` })) };
+  const workspace = await Workspace.open(testConfig);
   const app = await buildApp({ serveWeb: true, privateConfig: testConfig, passwordWriter: async () => {}, namesWriter: async () => {},
-    accountsService: { async snapshot() { return structuredClone(fixture); } } });
+    workspace, brevoClient: { async get(_key, endpoint) { return endpoint === '/v3/senders' ? { senders: [{ active: true, id: 8, name: 'Remitent de prova', email: 'sender@example.test' }] } : { plan: [{ type: 'free', creditsType: 'sendLimit', credits: 249 }] }; } },
+    accountsService: { async snapshot() { return { ...structuredClone(fixture), accounts: workspace.accounts().map(account => makeAccount(account.id)) }; } } });
   const base = await app.listen({ host: '127.0.0.1', port: 0 }); testConfig.origin = base;
   const errors = [];
   let browser;
@@ -102,37 +109,99 @@ async function verify(browserType, label, executablePath) {
     await page.waitForFunction(() => /^Fa 4\d s$/.test(document.querySelector('.refresh-age').textContent));
     await page.getByRole('button', { name: 'Configuració', exact: true }).click();
     await page.getByRole('heading', { name: 'Configuració', exact: true }).waitFor();
-    await page.getByLabel('Nom del compte 1').waitFor({ state: 'visible' });
-    await page.waitForFunction(() => !document.querySelector('#account-name-1').disabled);
-    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Compte 1');
-    await page.getByLabel('Nom del compte 1').fill('Nom no desat');
+    await page.getByRole('button', { name: 'Edita Compte 1', exact: true }).click();
+    assert.equal(await page.getByLabel('Nom del compte', { exact: true }).inputValue(), 'Compte 1');
+    await page.getByLabel('Nom del compte', { exact: true }).fill('Nom no desat');
     await page.getByRole('button', { name: 'Cancel·la', exact: true }).click();
-    assert.equal(await page.locator('.account-1 h2').innerText(), 'Compte 1');
-    await page.getByRole('button', { name: 'Configuració', exact: true }).click();
-    await page.waitForFunction(() => !document.querySelector('#account-name-1').disabled);
-    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Compte 1');
-    await page.getByLabel('Nom del compte 1').fill(' ');
-    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    await page.getByRole('button', { name: 'Edita Compte 1', exact: true }).click();
+    assert.equal(await page.getByLabel('Nom del compte', { exact: true }).inputValue(), 'Compte 1');
+    await page.getByLabel('Nom del compte', { exact: true }).fill(' ');
+    await page.getByRole('button', { name: 'Desa el compte', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'entre 1 i 100' }).waitFor();
-    await page.getByLabel('Nom del compte 1').fill('Personal ✉️');
-    await page.getByLabel('Nom del compte 2').fill('Projectes');
+    await page.getByLabel('Nom del compte', { exact: true }).fill('Personal ✉️');
+    await page.getByLabel('Icona', { exact: true }).selectOption('work');
+    await page.getByLabel('Color', { exact: true }).selectOption('blue');
+    await page.getByLabel('Pla contractat (referència)', { exact: true }).selectOption('subscription');
+    await page.getByLabel('Emails o crèdits contractats', { exact: true }).fill('5000');
+    await page.getByLabel('Dia de renovació (mensual)', { exact: true }).fill('12');
+    await page.getByLabel('Avisa si el saldo és ≤', { exact: true }).fill('100');
     for (const width of [320, 375, 390, 430, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(page); }
     await page.setViewportSize({ width: 390, height: 900 });
+    // Pausa acotada de composició després dels canvis seguits de viewport.
+    await page.waitForTimeout(150);
     assert.equal(await page.locator('.brand-symbol').count(), 1);
     assert.equal(await page.locator('footer').innerText(), 'Brevo MiniApp · Accés privat');
-    await page.screenshot({ path: join(directory, `${label}-settings.png`) });
+    await page.getByLabel('Dia de renovació (mensual)', { exact: true }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(directory, `${label}-account-editor-bottom.png`) });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: join(directory, `${label}-account-editor.png`) });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.route('**/api/settings/accounts', async route => {
+    await page.route('**/api/workspace/accounts/1', async route => {
       if (route.request().method() === 'POST') await route.fulfill({ status: 500, json: { error: 'INTERNAL_ERROR' } });
       else await route.continue();
     });
-    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    await page.getByRole('button', { name: 'Desa el compte', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'No s’ha pogut confirmar' }).waitFor();
-    assert.equal(await page.getByLabel('Nom del compte 1').inputValue(), 'Personal ✉️');
-    await page.unroute('**/api/settings/accounts');
-    await page.getByRole('button', { name: 'Desa els noms', exact: true }).click();
+    assert.equal(await page.getByLabel('Nom del compte', { exact: true }).inputValue(), 'Personal ✉️');
+    await page.unroute('**/api/workspace/accounts/1');
+    await page.getByRole('button', { name: 'Desa el compte', exact: true }).click();
+    await page.getByRole('button', { name: 'Edita Personal ✉️', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Edita Compte 2', exact: true }).click();
+    await page.getByLabel('Nom del compte', { exact: true }).fill('Projectes');
+    await page.getByRole('button', { name: 'Desa el compte', exact: true }).click();
+    await page.getByRole('button', { name: 'Afegeix un compte', exact: true }).click();
+    await page.getByLabel('Nom del compte', { exact: true }).fill('Tercer compte');
+    await page.getByLabel('Clau API de Brevo', { exact: true }).fill('synthetic-third-private-key-only');
+    await page.getByLabel('Contrasenya actual de la MiniApp', { exact: true }).fill(password);
+    await page.getByRole('button', { name: 'Desa el compte', exact: true }).click();
+    await page.getByRole('button', { name: 'Edita Tercer compte', exact: true }).waitFor();
+    assert.equal(await page.locator('.managed-account').count(), 3);
+    await page.getByRole('button', { name: 'Puja Tercer compte', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Ordre desat.' }).waitFor();
+    assert.equal(await page.locator('.managed-account h2').nth(1).innerText(), 'Tercer compte');
+    await page.getByRole('button', { name: 'Edita Tercer compte', exact: true }).click();
+    await page.getByLabel('Contrasenya actual de la MiniApp', { exact: true }).fill(password);
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Desconnecta de la MiniApp', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Compte desconnectat' }).waitFor();
+    assert.equal(await page.locator('.managed-account').count(), 2);
+    await page.screenshot({ path: join(directory, `${label}-settings.png`), fullPage: true });
+    await page.getByRole('button', { name: 'Avisos', exact: true }).click();
+    await page.getByLabel('Activa els avisos per correu', { exact: true }).check();
+    await page.getByLabel('Correu destinatari', { exact: true }).fill('recipient@example.test');
+    await page.getByLabel('Compte Brevo que paga els avisos', { exact: true }).selectOption('2');
+    await page.getByLabel('Remitent actiu d’aquest compte', { exact: true }).selectOption('8');
+    await page.getByLabel('Contrasenya de la MiniApp per desar o provar', { exact: true }).fill(password);
+    await page.getByRole('button', { name: 'Desa els avisos', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Configuració dels avisos desada.' }).waitFor();
+    assert(await page.getByRole('button', { name: 'Envia una prova als canals actius', exact: true }).isDisabled());
+    // Simulador PushManager: cap permís del SO, cap registre o enviament extern real.
+    await page.evaluate(fixture => {
+      let subscription = null;
+      const registration = { pushManager: {
+        async getSubscription() { return subscription; },
+        async subscribe() { subscription = { endpoint: fixture.endpoint, toJSON: () => fixture, async unsubscribe() { subscription = null; return true; } }; return subscription; },
+      } };
+      Notification.requestPermission = async () => 'denied';
+      Object.defineProperty(navigator.serviceWorker, 'ready', { configurable: true, value: Promise.resolve(registration) });
+      navigator.serviceWorker.getRegistration = async () => registration;
+    }, { endpoint: 'https://web.push.apple.com/synthetic-ui-endpoint', keys: { auth: randomBytes(16).toString('base64url'), p256dh: generatePushKeys().publicKey } });
+    await page.getByRole('button', { name: 'Activa en aquest dispositiu', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'No s’ha donat permís' }).waitFor();
+    await page.evaluate(() => { Notification.requestPermission = async () => 'granted'; });
+    await page.getByRole('button', { name: 'Activa en aquest dispositiu', exact: true }).click();
+    await page.getByRole('button', { name: 'Desactiva en aquest dispositiu', exact: true }).waitFor();
+    assert.equal(workspace.settings().pushDevices.length, 1);
+    await page.getByRole('button', { name: 'Desactiva en aquest dispositiu', exact: true }).click();
+    await page.getByRole('button', { name: 'Activa en aquest dispositiu', exact: true }).waitFor();
+    assert.equal(workspace.settings().pushDevices.length, 0);
+    for (const width of [320, 375, 390, 430, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(page); }
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.screenshot({ path: join(directory, `${label}-alerts.png`), fullPage: true });
+    await page.getByRole('button', { name: 'Torna als comptes', exact: true }).click();
     await page.locator('.account-1 h2').getByText('Personal ✉️', { exact: true }).waitFor();
     assert.equal(await page.locator('.account-2 h2').innerText(), 'Projectes');
+    assert.equal(await page.locator('.account-1.color-blue').count(), 1);
     const peer = await browser.newContext();
     assert.equal((await peer.request.post(`${base}/api/auth/login`, { headers: { origin: base, 'x-app-request': '1' }, data: { password } })).status(), 200);
     assert.deepEqual(await (await peer.request.get(`${base}/api/settings/accounts`)).json(), { names: { '1': 'Personal ✉️', '2': 'Projectes' } });
@@ -256,8 +325,8 @@ async function verify(browserType, label, executablePath) {
     const unauthorized = await context.request.get(`${base}/api/accounts`); assert.equal(unauthorized.status(), 401);
     assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
     assert.deepEqual(errors, []);
-    await context.close(); console.log(`${label}: accés, noms, temporitzador, gràfic, errors, canvi de contrasenya, sessions i amplades 320–1280 correctes.`);
-  } finally { await browser?.close(); await app.close(); }
+    await context.close(); console.log(`${label}: accés, comptes dinàmics, plans, aparença, avisos sense enviament real, temporitzador, gràfic, errors, contrasenya, sessions i amplades 320–1280 correctes.`);
+  } finally { await browser?.close(); await app.close(); await rm(temporary, { recursive: true, force: true }); }
 }
 const engines = (process.env['UI_BROWSERS'] ?? 'chromium').split(',');
 if (engines.some((engine) => !['chromium', 'webkit'].includes(engine))) throw new Error('UI_BROWSERS ha de ser chromium, webkit o tots dos separats per coma.');

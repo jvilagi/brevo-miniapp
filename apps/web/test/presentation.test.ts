@@ -30,6 +30,11 @@ test('saldo Free independent del dia SMTP i sense hora de reinici no verificada'
   assert(!JSON.stringify(free).match(/00:00|GMT|Disponibles avui/));
   assert.equal(quotaPresentation({ regime: 'free', available: 300, dailyLimit: 300 }).available, 300);
 });
+test('saldo mensual segons API separat de la reserva prepagament', () => {
+  const monthly = quotaPresentation({ regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 400 });
+  assert.equal(monthly.available, 1200); assert.equal(monthly.fraction, null);
+  assert.match(monthly.note, /400/); assert.notEqual(monthly.available, 1600);
+});
 test('gràfic: buits explícits, zeros reals i escala compartida', () => {
   const points = chartPoints([0, null, 20]);
   assert.equal(points[0]!.value, 0); assert.equal(points[1], null); assert.equal(points[2]!.value, 20);

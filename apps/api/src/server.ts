@@ -1,13 +1,17 @@
 import { buildApp } from './app.js';
 import { readConfig } from './config.js';
 import { loadPrivateConfig } from './private-config.js';
-import { AccountsService } from './brevo.js';
+import { AccountsService, BrevoClient } from './brevo.js';
+import { Workspace } from './workspace.js';
 
 try {
   const config = readConfig();
   const privateConfig = await loadPrivateConfig();
+  const workspace = privateConfig.auth ? await Workspace.open(privateConfig) : undefined;
+  const client = new BrevoClient();
+  const service = new AccountsService(workspace ? () => workspace.accounts() : privateConfig.accounts, privateConfig.timezone, client);
   const app = await buildApp({ serveWeb: config.production, privateConfig,
-    accountsService: new AccountsService(privateConfig.accounts, privateConfig.timezone) });
+    accountsService: service, ...(workspace ? { workspace, brevoClient: client, quotaReader: () => service.quotas() } : {}) });
   const address = await app.listen({ host: config.host, port: config.port });
   console.info(`Brevo MiniApp: ${address}`);
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {

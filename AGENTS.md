@@ -20,9 +20,13 @@
 
 ## Producte
 
-PWA mobile-first, especialment per a iPhone, de consulta de dos comptes
-Brevo. Cada compte té una targeta desplegable amb consum, saldo,
+PWA mobile-first, especialment per a iPhone, de consulta de comptes
+Brevo (dos inicials; configuració dinàmica fins a 25 aprovada el 2026-10-17,
+implementada localment i pendent de desplegar). Cada compte té una targeta desplegable amb consum, saldo,
 estadístiques i un gràfic dels últims set dies.
+Configuració privada de claus i avisos per correu/push aprovada; el correu
+és l'únic POST a Brevo i només quan s'habiliten els avisos. No enviïs proves
+reals ni activis el gate de notificacions sense autorització expressa.
 
 ## Seguretat i dades
 
