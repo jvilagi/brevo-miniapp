@@ -14,6 +14,17 @@ carrega fitxers `.env`. Qualsevol futura variable `PUBLIC_WEB_*` ha de
 contenir només configuració pública; mai claus o contrasenyes.
 
 Les peticions són del mateix origen, amb cookies i `cache: no-store`.
+Límit de 10 segons per comprovar la sessió i 30 segons per a la resta,
+inclosa la lectura del cos JSON. Una cancel·lació externa es propaga i
+els POST no es reintenten automàticament: un timeout no confirma si el
+servidor ha completat el canvi.
+L'arrencada ofereix reintent i controls PWA també durant l'espera. En
+ocultar-se cancel·la la comprovació; en reprendre comprova el termini
+amb el rellotge real i inicia una nova lectura si cal. Respostes obsoletes
+no poden canviar la sessió. Sense polling.
+«Carrega l'última versió» navega a `/?recovery=1`: el worker existent
+exclou paràmetres i deixa obtenir l'HTML de xarxa. No esborra cookies,
+emmagatzematge, configuració ni subscripcions push. Necessita connexió.
 Les dades queden només en memòria React. No hi ha polling, es cancel·len
 peticions en ocultar la pàgina i es refresca en reprendre-la quan han
 passat 60 segons, o amb el botó Actualitza. En error es mantenen dades
@@ -65,7 +76,8 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-10 proves de presentació i worker incloses a `npm test`, inclosos el comptador i el saldo Free
+15 proves de peticions, presentació i worker incloses a `npm test`, inclosos límits de temps,
+cancel·lació, validació de sessió, absència de reintents POST, el comptador i el saldo Free
 independent de les sol·licituds SMTP i sense hora de reinici inventada.
 La comprovació de navegador
 és separada: `npm run test:ui` compila i executa `scripts/check-ui.mjs`
@@ -93,6 +105,11 @@ avisos amb enviaments desactivats. No comproven cap entrega push real.
 Amb les mateixes variables de navegador, `npm run test:pwa` comprova
 manifest, dimensions de les icones, precache, absència de dades privades,
 offline, represa, logout i canvi de versió acceptat; dades només sintètiques.
+`npm run test:startup` simula sessió pendent, reintent durant/després del
+timeout, cancel·lació i resposta tardana, represa coalescent, rellotge
+després de suspensió, offline/online, JSON invàlid i actualització PWA
+durant l'espera. Verifica `/?recovery=1` contra el worker actiu i absència
+de cache d'API o paràmetres. Captura a `test-results/startup/`, fora de Git.
 `DEPLOY_CHECK_ORIGIN=https://el-teu-domini node scripts/check-deployed.mjs`
 comprova el domini HTTPS propi sense
 contrasenya ni lectures autenticades: pantalla d'accés, manifest, icones,

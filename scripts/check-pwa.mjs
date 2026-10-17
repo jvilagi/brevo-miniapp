@@ -82,7 +82,7 @@ try {
   const apiOffline = await page.evaluate(async () => { try { await fetch('/api/accounts'); return false; } catch { return true; } });
   assert(apiOffline, 'L’API no pot respondre des de la cache');
   await page.screenshot({ path: join(output, 'offline.png'), fullPage: true });
-  await context.setOffline(false); await page.getByRole('button', { name: 'Torna-ho a provar' }).click();
+  await context.setOffline(false);
   await page.locator('.account-1').waitFor();
   secondVersion = true;
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());

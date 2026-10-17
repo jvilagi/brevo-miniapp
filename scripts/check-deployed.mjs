@@ -67,8 +67,16 @@ try {
   });
   assert.equal(offlineApi, true);
   await context.setOffline(false);
-  await page.getByRole('button', { name: 'Torna-ho a provar' }).click();
   await page.getByRole('heading', { name: 'Benvingut' }).waitFor();
+  const recovery = await page.goto(`${origin}/?recovery=1`);
+  assert.equal(recovery.status(), 200);
+  await page.getByRole('heading', { name: 'Benvingut' }).waitFor();
+  assert(await page.evaluate(async () => {
+    for (const key of await caches.keys()) for (const request of await (await caches.open(key)).keys()) {
+      if (new URL(request.url).search || new URL(request.url).pathname.startsWith('/api/')) return false;
+    }
+    return true;
+  }), 'Recuperació i API excloses de la cache');
   assert.deepEqual(errors, []);
   console.info('Desplegament HTTPS: accés privat, manifest, icones, service worker, offline estàtic i represa correctes.');
   await context.close();

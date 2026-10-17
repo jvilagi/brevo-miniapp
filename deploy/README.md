@@ -127,6 +127,13 @@ API protegida, cache estàtica, offline i represa sense contrasenya ni
 consulta dels comptes. Verifica manualment el login i les dades pròpies.
 Cada reinici revoca les sessions; la contrasenya no canvia.
 
+Si una PWA conserva una versió antiga bloquejada a l'arrencada, obre
+`https://el-teu-domini/?recovery=1` amb connexió. El paràmetre evita la
+còpia HTML del worker, sense esborrar cookies ni dades. La versió nova
+limita la comprovació de sessió a 10 segons, ofereix reintent i mostra
+l'actualització PWA també durant l'espera. No cal rotar secrets ni
+reinstal·lar com a primer pas. Verifica el resultat a l'iPhone real.
+
 No executis `docker inspect` complet, `env`, `cat` dels fitxers privats
 o `docker compose config` sense `--quiet` en logs compartits. Per salut:
 

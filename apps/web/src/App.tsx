@@ -64,10 +64,37 @@ export function App() {
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController(); setSessionError(false);
-    void api.session(controller.signal).then(setAuth).catch(() => { if (!controller.signal.aborted) setSessionError(true); });
-    return () => controller.abort();
-  }, [retry]);
+    if (auth) return;
+    let disposed = false, current: AbortController | null = null, started = 0;
+    const stop = () => { current?.abort(); current = null; };
+    const check = () => {
+      if (disposed || document.hidden) return;
+      stop(); const controller = new AbortController(); current = controller; started = Date.now();
+      setSessionError(false);
+      void api.session(controller.signal).then(result => {
+        if (disposed || controller.signal.aborted || current !== controller) return;
+        current = null; setAuth(result);
+      }).catch(() => {
+        if (disposed || controller.signal.aborted || current !== controller) return;
+        current = null; setSessionError(true);
+      });
+    };
+    const resume = () => {
+      if (document.hidden) stop();
+      else if (!current || Date.now() - started >= api.SESSION_TIMEOUT_MS) check();
+    };
+    const offlineEvent = () => { stop(); setSessionError(true); };
+    check();
+    document.addEventListener('visibilitychange', resume); window.addEventListener('focus', resume);
+    window.addEventListener('pageshow', resume); window.addEventListener('online', resume);
+    window.addEventListener('pagehide', stop); window.addEventListener('offline', offlineEvent);
+    return () => {
+      disposed = true; stop(); document.removeEventListener('visibilitychange', resume);
+      window.removeEventListener('focus', resume); window.removeEventListener('pageshow', resume);
+      window.removeEventListener('online', resume); window.removeEventListener('pagehide', stop);
+      window.removeEventListener('offline', offlineEvent);
+    };
+  }, [auth, retry]);
   const refresh = useCallback(async (force = false) => {
     if (document.hidden || inFlight.current || (!force && Date.now() - lastRead.current < 60_000)) return;
     const controller = new AbortController(); inFlight.current = controller;
@@ -127,7 +154,10 @@ export function App() {
     }) } : current);
     setSettingsMessage('Configuració desada.'); void refresh(true);
   }
-  if (!auth) return <main className="connection-screen"><Brand/>{sessionError ? <><h1>No podem connectar</h1><p>Comprova la connexió amb el servidor.</p><button className="primary-button" onClick={() => setRetry(retry + 1)}>Torna-ho a provar</button></> : <p role="status">Preparant la teva MiniApp…</p>}</main>;
+  if (!auth) return <main className="connection-screen"><Brand/>{sessionError ? <><h1>No podem connectar</h1><p>La comprovació de sessió no s’ha completat. Pots tornar-ho a provar.</p></> : <p role="status">Preparant la teva MiniApp…</p>}
+    <button className="primary-button" onClick={() => setRetry(value => value + 1)}>Torna-ho a provar</button>
+    <a className="text-button" href="/?recovery=1">Carrega l’última versió</a><PwaControls/>
+  </main>;
   if (!auth.authenticated) return <Login configured={auth.configured} message={sessionMessage} onLogin={() => { setAuth({ authenticated: true, configured: true }); setSessionMessage(null); }}/>;
   if (editingSettings) return <div className="login-shell"><header><Brand/><span className="private-label"><Icon name="lock"/>Accés privat</span></header>
     <main className="settings-main"><AccountSettings onChanged={settingsChanged} onCancel={() => setEditingSettings(false)} onExpired={expired}/></main>

@@ -99,14 +99,16 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 70 proves (60 API + 10 presentació/worker), compilació i separació
+Comprova tipus, 75 proves (60 API + 15 peticions/presentació/worker), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 
-`npm run test:ui` i `npm run test:pwa` requereixen Playwright i un navegador;
+`npm run test:ui`, `npm run test:pwa` i `npm run test:startup` requereixen Playwright i un navegador;
 configuració a [`apps/web/README.md`](apps/web/README.md). Chrome mòbil i
 escriptori verificats entre 320–1280 px, offline, represa i actualització
 controlada. Safari/iPhone real continua pendent; no es garanteix paritat.
+La prova d'arrencada simula una sessió bloquejada, cancel·lació i represa,
+respostes invàlides i recuperació sense esborrar dades.
 Les proves dels canals són simulades: no acrediten una entrega real de
 correu o push a l'iPhone. Consulta els límits i l'activació a la guia.
 

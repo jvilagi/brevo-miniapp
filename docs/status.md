@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-70 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+75 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -385,3 +385,28 @@ Configuració activa l'explicació específica; el desplegament no canvia
 la referència privada de l'usuari. Cal tornar a entrar i acceptar
 «Actualitza l'app» si la PWA manté la versió anterior. iPhone real i
 entrega real dels canals continuen pendents.
+
+## Recuperació de l'arrencada bloquejada
+
+2026-10-17: diagnòstic i correcció aprovats amb GPT-6.1 Sol / High.
+Incidència comunicada primer a la PWA de l'iPhone i després a tots els
+navegadors. En la comprovació, salut i sessió públiques responien `200`
+i una sessió nova de Chrome arribava al login. La causa exacta de la
+petició pendent al dispositiu no s'ha pogut acreditar.
+
+Reproducció sintètica: una sessió sense resposta deixava la versió anterior
+a «Preparant» més de 17 segons, sense reintent ni controls d'actualització;
+reprendre la pàgina tampoc iniciava una comprovació nova.
+Correcció local: sessió limitada a 10 segons, altres peticions a 30 segons
+inclòs el cos, JSON de sessió validat, cancel·lació en segon pla i
+represa coalescent amb rellotge real. No es reintenta cap POST de manera
+automàtica ni s'accepten respostes obsoletes. Reintent i controls PWA
+visibles durant l'espera i en error. Enllaç `/?recovery=1` per obtenir
+HTML de xarxa sense eliminar cookies, dades o subscripcions.
+
+15 proves web superades, compilació correcta i regressions Chrome
+d'arrencada/PWA superades amb dades sintètiques: petició pendent,
+timeout, reintent, resposta tardana, represa, offline/online, JSON invàlid,
+actualització durant l'espera i recuperació fora de cache. Captura d'error
+mòbil generada. Comprovació completa Linux i desplegament encara pendents.
+La confirmació del resultat a l'iPhone real correspon a l'usuari.

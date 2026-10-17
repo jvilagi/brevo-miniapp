@@ -16,6 +16,7 @@
     "test": "npm run build -w @brevo-miniapp/contracts && npm run test --workspaces --if-present",
     "test:ui": "npm run build && node scripts/check-ui.mjs",
     "test:pwa": "npm run build && node scripts/check-pwa.mjs",
+    "test:startup": "npm run build && node scripts/check-startup.mjs",
     "package:release": "node scripts/package-release.mjs",
     "notices:generate": "node scripts/generate-notices.mjs",
     "start": "node apps/api/dist/server.js",

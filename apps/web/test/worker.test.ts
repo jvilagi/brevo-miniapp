@@ -37,7 +37,8 @@ test('push: el clic enfoca l’app existent o obre només el mateix origen', asy
 });
 test('worker: API, POST i recursos aliens mai entren en cache', async () => {
   const w = await worker();
-  for (const [url, method] of [['https://miniapp.example.test/api/workspace', 'GET'], ['https://miniapp.example.test/index.html', 'POST'], ['https://evil.test/index.html', 'GET']]) {
+  for (const [url, method] of [['https://miniapp.example.test/api/workspace', 'GET'], ['https://miniapp.example.test/index.html', 'POST'], ['https://evil.test/index.html', 'GET'],
+    ['https://miniapp.example.test/?recovery=1', 'GET'], ['https://miniapp.example.test/index.html?recovery=1', 'GET']]) {
     let intercepted = false;
     w.listeners.get('fetch')!({ request: new Request(url!, { method }), respondWith() { intercepted = true; } });
     assert.equal(intercepted, false);

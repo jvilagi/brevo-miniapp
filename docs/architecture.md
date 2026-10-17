@@ -49,11 +49,19 @@ límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 10 proves de presentació/worker i la
+verificat amb els dos comptes reals. Hi ha 15 proves de peticions/presentació/worker i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
 dades privades. Safari/iPhone real continua pendent.
+
+Arrencada amb comprovació de sessió limitada a 10 segons, validació de
+dos booleans, reintent manual i represa després de segon pla. Les altres
+peticions tenen 30 segons, inclòs el JSON; els POST no es repeteixen
+automàticament. Cancel·lació i respostes obsoletes controlades. Controls
+PWA visibles durant l'espera i en error; l'actualització continua exigint
+consentiment. `/?recovery=1` aprofita l'exclusió de paràmetres del worker
+per obtenir HTML de xarxa sense eliminar dades locals ni sessions.
 
 El carregador llegeix `accounts.env` i `auth.env` fora del checkout,
 amb permisos restringits. `npm run setup:auth` prepara hash scrypt i
@@ -260,9 +268,9 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-70 proves de càlculs, accés, configuració, avisos, presentació i worker; comprovació de tipus, aïllament
+75 proves de càlculs, accés, configuració, avisos, peticions, presentació i worker; comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
-amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
+amb dades sintètiques, inclosa l'arrencada amb sessió bloquejada. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.
 Pendent: Safari/WebKit, instal·lació standalone a l'iPhone real i accés
 personal amb la contrasenya del responsable de cada instal·lació.

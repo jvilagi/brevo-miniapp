@@ -127,9 +127,14 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 
 ## Comprovacions
 
-- 10 proves de presentació/worker: temps transcorregut, format català, desconeguts, Free/prepagament/subscripció,
+- 15 proves de peticions/presentació/worker: sessió vàlida, límits de temps,
+  cancel·lació, POST sense reintent, temps transcorregut, format català, desconeguts, Free/prepagament/subscripció,
   saldo sense hora de reinici no verificada, escala i buits del gràfic,
   dades antigues i fus horari.
+- `scripts/check-startup.mjs`: espera limitada, reintent manual i represa,
+  errors de sessió, controls d'actualització també durant l'arrencada i
+  recuperació amb HTML de xarxa sense esborrar dades. Controls comprovats
+  sense desbordament a 320, 390 i 1280 px amb dades sintètiques.
 - `scripts/check-ui.mjs`: Chrome real en mode headless, context mòbil
   tàctil, amplades de 320, 375, 390, 430 i 1280 px, sense desbordament.
   Cas de regressió sintètic: zero sol·licituds avui amb saldo Free
