@@ -9,20 +9,40 @@ function count(value: unknown): number | null {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
+function planDate(value: unknown): number | null {
+  if (typeof value !== 'string') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const time = Date.parse(`${value}T00:00:00Z`);
+    return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value ? time : null;
+  }
+  if (/^\d{9,11}$/.test(value)) {
+    const time = Number(value) * 1000;
+    return Number.isFinite(new Date(time).getTime()) ? time : null;
+  }
+  return null;
+}
+
 // Mai deduir Free perquè el saldo prepagament arribi a zero.
 export function normalizeQuota(account: unknown): Quota {
-  const plans = object(account)?.['plan'];
+  const source = object(account), plans = source?.['plan'];
   if (!Array.isArray(plans)) return { regime: 'unknown', available: null, dailyLimit: null };
   const emailPlans = plans.map(object).filter((plan) =>
     plan && ['free', 'payAsYouGo', 'subscription', 'reseller'].includes(String(plan['type'])));
   const prepaid = emailPlans.filter((plan) => plan?.['type'] === 'payAsYouGo');
   const subscription = emailPlans.filter(plan => plan?.['type'] === 'subscription');
+  const verticals = source?.['planVerticals'];
+  const activeMarketing = Array.isArray(verticals) ? verticals.map(object).filter(vertical =>
+    vertical?.['planCategory'] === 'Marketing' && vertical['status'] === 'active') : [];
+  const paidSubscription = activeMarketing.length === 1 && activeMarketing[0]?.['planType'] === 'paid';
   // Els saldos mensual i de reserva són independents: mai se sumen ni es resten dels informes SMTP.
   if (subscription.length === 1 && emailPlans.every(plan => ['subscription', 'payAsYouGo'].includes(String(plan?.['type']))) && prepaid.length <= 1) {
     const monthly = subscription[0], backup = prepaid[0];
+    const start = planDate(monthly?.['startDate']), end = planDate(monthly?.['endDate']);
+    // Un zero aïllat pot ser el placeholder observat en prepagament, no una subscripció activa.
+    const paidPeriod = paidSubscription && start !== null && end !== null && start < end;
     if (monthly?.['creditsType'] === 'sendLimit' && count(monthly['credits']) !== null &&
       (!backup || backup['creditsType'] === 'sendLimit' && count(backup['credits']) !== null) &&
-      (count(monthly['credits']) !== 0 || !backup)) {
+      (count(monthly['credits']) !== 0 || !backup || paidPeriod)) {
       return { regime: 'subscription', available: count(monthly['credits'])!, dailyLimit: null, prepaidAvailable: backup ? count(backup['credits']) : null };
     }
   }

@@ -93,7 +93,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 68 proves (58 API + 10 presentació/worker), compilació i separació
+Comprova tipus, 70 proves (60 API + 10 presentació/worker), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

@@ -34,6 +34,22 @@ test('subscripció i reserva es presenten per separat, sense sumar-les', () => {
   assert.deepEqual(normalizeQuota({ plan: [{ type: 'subscription', creditsType: 'sendLimit', credits: 0 }] }),
     { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: null });
 });
+test('subscripció de pagament esgotada: conserva zero i la reserva separada', () => {
+  const plan = [{ type: 'subscription', creditsType: 'sendLimit', credits: 0, startDate: '2026-10-01', endDate: '2026-11-01' }, { type: 'payAsYouGo', creditsType: 'sendLimit', credits: 1200 }];
+  assert.deepEqual(normalizeQuota({ plan, planVerticals: [{ planCategory: 'Marketing', planType: 'paid', status: 'active' }] }),
+    { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: 1200 });
+  for (const vertical of [{ planCategory: 'Marketing', planType: 'paid', status: 'inactive' },
+    { planCategory: 'Marketing', planType: 'free', status: 'active' }, { planCategory: 'Chat', planType: 'paid', status: 'active' }]) {
+    assert.deepEqual(normalizeQuota({ plan, planVerticals: [vertical] }), { regime: 'prepaid', available: 1200, dailyLimit: null });
+  }
+  const planVerticals = [{ planCategory: 'Marketing', planType: 'paid', status: 'active' }];
+  assert.equal(normalizeQuota({ plan, planVerticals: [...planVerticals, { planCategory: 'Marketing', planType: 'free', status: 'active' }] }).regime, 'prepaid');
+  for (const dates of [{ startDate: undefined, endDate: undefined }, { startDate: '2026-02-31', endDate: '2026-04-01' },
+    { startDate: '2026-11-01', endDate: '2026-10-01' }]) {
+    assert.equal(normalizeQuota({ plan: [{ ...plan[0], ...dates }, plan[1]], planVerticals }).regime, 'prepaid');
+  }
+  assert.equal(normalizeQuota({ plan: [{ ...plan[0], startDate: String(Date.parse('2026-10-01') / 1000), endDate: String(Date.parse('2026-11-01') / 1000) }, plan[1]], planVerticals }).regime, 'subscription');
+});
 
 test('no s’exposen dades personals, claus o camps no contractats', () => {
   const metrics = normalizeSmtpMetrics({ requests: 15, delivered: 15, email: 'private@example.test', key: 'private', other: 10 });

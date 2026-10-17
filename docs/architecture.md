@@ -44,7 +44,7 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 58 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
+Hi ha 60 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
 límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
@@ -244,7 +244,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-68 proves de càlculs, accés, configuració, avisos, presentació i worker; comprovació de tipus, aïllament
+70 proves de càlculs, accés, configuració, avisos, presentació i worker; comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

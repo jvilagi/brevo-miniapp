@@ -152,6 +152,13 @@ test('avisos: dades antigues no creen saldo zero ni rearmen un avís de saldo', 
   fresh = false; now += 300000; await service.tick(); assert.equal(calls, 1);
   now += 300000; fresh = true; await service.tick(); assert.equal(calls, 1);
 });
+test('avisos: subscripció esgotada explicita els crèdits de reserva, sense sumar-los', async t => {
+  const { workspace } = await configured(t); let message = '';
+  await new AlertMonitor(workspace, async () => [{ id: '1', quota: { status: 'fresh', updatedAt: new Date().toISOString(), error: null,
+    data: { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: 4800 } } }],
+  { async send(_key, _sender, _recipient, _subject, text) { message = text; } }).tick();
+  assert.match(message, /subscripció segons Brevo 0/); assert.match(message, /prepagament 4800/);
+});
 test('avisos: errors d’enviament i timeouts no es reintenten immediatament', async t => {
   const { workspace } = await configured(t); let calls = 0;
   const service = new AlertMonitor(workspace, async () => [quota(10)], { async send() { calls++; throw new Error('private-response-canary'); } });

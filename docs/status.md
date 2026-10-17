@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-68 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+70 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -258,3 +258,32 @@ sessió rebutjats amb `401` i `no-store`, inclosos comptes, configuració,
 remitents i operacions push. No s'ha iniciat sessió ni consultat dades
 reals per HTTPS en aquesta comprovació. Queden pendents el login de
 l'usuari després del reinici i l'entrega real de cada canal amb aprovació.
+
+## Doble saldo de subscripció i prepagament — ajust local
+
+2026-10-17: comprovació i ajust aprovats amb GPT-6.1 Sol / High. GET real
+dels dos comptes, sense desar payloads complets ni exposar claus. Un compte
+retorna ara subscripció amb saldo positiu i reserva prepagament simultània;
+l'altre continua Free. La normalització ja obtenia tots dos saldos, però
+la reserva quedava en una nota petita. Els valors reals i noms privats no
+s'incorporen a la documentació pública ni a les dades sintètiques de prova.
+
+Ajustada la targeta local per mostrar dos números independents i grans,
+separats de les sol·licituds SMTP d'avui. Sense sumar ni restar enviaments,
+sense substituir saldos reals per la referència manual. Estat i timestamp
+de la quota visibles a tots dos; dada absent no és zero.
+
+Quan Brevo acredita un pla Marketing de pagament actiu i període de
+subscripció vàlid, es conserva la subscripció esgotada com a zero al costat
+de la reserva. El placeholder zero prepagament sense aquest context manté
+el tractament anterior. Dates Unix documentades i calendari observat
+validats, sense deduir renovacions o reinicis. Els correus d'avís també
+distingeixen el saldo de subscripció i la reserva; no s'ha enviat cap prova real.
+
+70 proves (60 API + 10 presentació/worker), tipus, compilació i límits de
+secrets superats. Chrome UI/PWA verificats amb dades sintètiques: dos saldos
+alineats a 320–1280 px, subscripció esgotada, reserva zero o absent, dades
+antigues identificades a tots dos i regressions anteriors. Captures de
+targeta mòbil i escriptori revisades visualment. iPhone real no verificat.
+Aquest ajust encara no s'ha publicat ni desplegat. La versió activa, les
+claus, els fitxers privats i els avisos desactivats no s'han modificat.

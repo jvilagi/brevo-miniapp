@@ -33,7 +33,9 @@ test('saldo Free independent del dia SMTP i sense hora de reinici no verificada'
 test('saldo mensual segons API separat de la reserva prepagament', () => {
   const monthly = quotaPresentation({ regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 400 });
   assert.equal(monthly.available, 1200); assert.equal(monthly.fraction, null);
-  assert.match(monthly.note, /400/); assert.notEqual(monthly.available, 1600);
+  assert.equal(monthly.title, 'Emails de subscripció'); assert.match(monthly.note, /saldos es mostren separats/); assert.notEqual(monthly.available, 1600);
+  const unknownReserve = quotaPresentation({ regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: null });
+  assert.equal(unknownReserve.available, 0); assert.match(unknownReserve.note, /no se suposa que sigui zero/);
 });
 test('gràfic: buits explícits, zeros reals i escala compartida', () => {
   const points = chartPoints([0, null, 20]);

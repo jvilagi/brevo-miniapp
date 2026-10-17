@@ -34,16 +34,28 @@ no causes acreditades retrospectivament.
 Revisió del 2026-10-17 per als comptes configurables: nou GET real dels dos
 plans existents, sense desar payloads complets ni valors personals. Es
 manté el patró de prepagament amb entrada de subscripció zero al primer
-compte i Free al segon. No s'ha observat una transició de règim ni un
-pla de subscripció mensual positiu en aquests comptes.
+compte i Free al segon. En aquella lectura encara no s'havia observat un
+saldo de subscripció positiu. Una consulta posterior del mateix dia ha
+confirmat una subscripció amb saldo positiu i crèdits prepagament simultanis,
+amb vertical Marketing de pagament activa; l'altre compte continua Free.
+No es documenta aquí cap saldo, nom privat ni període personal.
 
 La documentació de [Get account](https://developers.brevo.com/reference/get-account)
 defineix `plan[].credits` com a saldo restant i `planVerticals.credits`
 com a crèdits assignats: no són intercanviables. La nova versió reconeix
 una única subscripció amb `creditsType=sendLimit` i saldo vàlid; si també
 hi ha una reserva prepagament vàlida, es mostra separadament. No se sumen
-els saldos. Subscripció zero amb reserva conserva el règim prepagament
-ja verificat; combinacions conflictives queden desconegudes.
+els saldos. Subscripció zero amb reserva, sense més context, conserva el
+règim prepagament ja verificat; combinacions conflictives queden desconegudes.
+
+Ajust local pendent de publicar i desplegar: la targeta mostra els dos
+saldos com a xifres independents, no només la reserva en una nota. Si
+Brevo acredita una vertical Marketing de pagament activa i un període
+de subscripció explícit vàlid, es manté el saldo de subscripció zero amb
+la reserva separada. Les dates admeten el format Unix documentat i el
+format calendari observat a la resposta real; no serveixen per calcular
+ni reiniciar crèdits. Sense aquest context, no es transforma un placeholder
+zero en una subscripció activa. Un saldo absent es mostra com a desconegut.
 El dia de renovació introduït manualment és només una referència, no
 una data acreditada de l'API ni una regla per restablir saldo.
 

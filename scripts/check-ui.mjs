@@ -213,6 +213,44 @@ async function verify(browserType, label, executablePath) {
     await page.getByRole('button', { name: 'Actualitza', exact: true }).click();
     await page.waitForFunction(() => /^Fa \d+ s$/.test(document.querySelector('.refresh-age').textContent));
     await noOverflow(page); await page.screenshot({ path: join(directory, `${label}-overview.png`), fullPage: true });
+    let balanceFixture = { regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 4800 };
+    let balanceStatus = 'fresh';
+    await page.route('**/api/accounts', async route => {
+      const monthly = structuredClone(fixture);
+      monthly.accounts[0].quota = { ...section(balanceFixture), status: balanceStatus };
+      await route.fulfill({ json: monthly });
+    });
+    const refreshBalances = async () => {
+      await Promise.all([page.waitForResponse(response => response.url() === `${base}/api/accounts`), page.getByRole('button', { name: 'Actualitza', exact: true }).click()]);
+      await page.waitForFunction(() => !document.querySelector('.refresh-button').disabled);
+    };
+    await refreshBalances();
+    await page.locator('.account-1 .prepaid-number strong').getByText('4.800', { exact: true }).waitFor();
+    assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '1.200');
+    assert.equal(await page.locator('.account-1 .balance-number .number-label').innerText(), 'Emails de subscripció');
+    assert.equal(await page.locator('.account-1 .prepaid-number .number-label').innerText(), 'Crèdits prepagament');
+    assert.equal(await page.locator('.account-1 .today-number strong').innerText(), '150');
+    for (const width of [320, 375, 390, 430, 760, 761, 1280]) {
+      await page.setViewportSize({ width, height: 900 }); await noOverflow(page);
+      const left = await page.locator('.account-1 .balance-number strong').boundingBox(), right = await page.locator('.account-1 .prepaid-number strong').boundingBox();
+      assert(left && right && left.x < right.x && Math.abs(left.y - right.y) < 2, 'Saldos independents alineats');
+      if ([390, 1280].includes(width)) { await page.waitForTimeout(150); await page.locator('.account-1').screenshot({ path: join(directory, `${label}-dual-balance-${width}.png`) }); }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    balanceFixture = { ...balanceFixture, available: 0 }; await refreshBalances();
+    await page.locator('.account-1 .balance-number strong').getByText('0', { exact: true }).waitFor();
+    assert.equal(await page.locator('.account-1 .prepaid-number strong').innerText(), '4.800');
+    balanceFixture = { ...balanceFixture, prepaidAvailable: 0 }; await refreshBalances();
+    await page.locator('.account-1 .prepaid-number strong').getByText('0', { exact: true }).waitFor();
+    balanceFixture = { ...balanceFixture, prepaidAvailable: null }; await refreshBalances();
+    await page.locator('.account-1 .prepaid-number strong').getByText('—', { exact: true }).waitFor();
+    assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '0');
+    assert.match(await page.locator('.account-1 .prepaid-number .number-source').innerText(), /no disponible/);
+    balanceFixture = { ...balanceFixture, available: 1200, prepaidAvailable: 4800 }; balanceStatus = 'stale'; await refreshBalances();
+    assert.match(await page.locator('.account-1 .balance-number .provenance').innerText(), /Dada antiga/);
+    assert.match(await page.locator('.account-1 .prepaid-number .provenance').innerText(), /Dada antiga/);
+    await page.unroute('**/api/accounts'); await refreshBalances();
+    await page.locator('.account-1 .balance-number strong').getByText('8.400', { exact: true }).waitFor();
     const card = page.locator('.account-1');
     await card.getByRole('button', { name: 'Estadístiques i evolució' }).click();
     for (const [metric, color] of [['delivered', 'rgb(38, 117, 192)'], ['opens', 'rgb(21, 159, 159)']]) {

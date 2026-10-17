@@ -16,6 +16,7 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
   const [period, setPeriod] = useState<'today' | 'week'>('today');
   const { quota, smtp, marketing } = account;
   const info = quotaPresentation(quota.data);
+  const subscription = quota.data?.regime === 'subscription' ? quota.data : null;
   const timezone = smtp.period.timezone;
   const selected = period === 'today' ? smtp.today.report : smtp.totals;
   const detailsId = `account-${account.id}-details`;
@@ -26,7 +27,7 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
         <span className="eyebrow">COMPTE BREVO</span><h2 id={`account-${account.id}-name`}>{account.name}</h2>
       </div></div><span className={`plan-badge ${quota.data?.regime === 'unknown' || !quota.data ? 'is-unknown' : ''}`}>{info.badge}</span>
     </div>
-    <div className="account-numbers">
+    <div className={`account-numbers${subscription ? ' has-subscription' : ''}`}>
       <div className="today-number"><span className="number-label">Sol·licituds avui</span><strong>{number(smtp.today.report.data?.requests)}</strong>
         <span className="number-source">Enviament transaccional</span><Provenance section={smtp.today.report} timezone={timezone} locallyStale={locallyStale}/>
       </div>
@@ -34,6 +35,10 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
         <span className="number-source">{info.source}</span>
         <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
       </div>
+      {subscription && <div className="prepaid-number"><span className="number-label">Crèdits prepagament</span><strong>{number(subscription.prepaidAvailable)}</strong>
+        <span className="number-source">{subscription.prepaidAvailable === null ? 'Saldo no disponible segons Brevo' : 'Restants segons Brevo'}</span>
+        <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
+      </div>}
     </div>
     {info.fraction !== null && <div className="quota-track" role="meter" aria-label="Saldo Free disponible segons Brevo" aria-valuemin={0} aria-valuemax={300} aria-valuenow={info.available!}>
       <span style={{ width: `${info.fraction * 100}%` }}/>

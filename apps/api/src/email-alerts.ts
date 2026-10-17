@@ -110,7 +110,11 @@ export class AlertMonitor {
             const waited = type !== 'connection' || firstProblem !== null && this.now() - firstProblem >= 900000;
             // Un pendent incert no es duplica fins al període explícit de repetició.
             if (active && waited && (!previous?.active || lastAttempt === null || this.now() - lastAttempt >= draft.alerts.repeatMinutes * 60000)) {
-              ready.push(key); lines.push(type === 'balance' ? `${account.name}: saldo segons Brevo ${available}.` : `${account.name}: no s’obtenen dades fresques des de fa almenys 15 minuts.`);
+              ready.push(key);
+              const data = quota?.data;
+              lines.push(type === 'connection' ? `${account.name}: no s’obtenen dades fresques des de fa almenys 15 minuts.` :
+                data?.regime === 'subscription' ? `${account.name}: emails restants de subscripció segons Brevo ${available}; crèdits prepagament ${data.prepaidAvailable ?? 'no disponibles'}.` :
+                `${account.name}: saldo segons Brevo ${available}.`);
             }
           }
         }
