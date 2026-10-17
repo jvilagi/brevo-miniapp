@@ -5,7 +5,7 @@ Actualització: 2026-10-17, Europe/Madrid.
 ## Implementat
 
 React + TypeScript + Vite i Node.js 24 + Fastify en un monorepo npm.
-Accés privat, consulta GET de dos comptes, saldo segons API, estadístiques
+Accés privat, consulta GET de comptes configurables, saldo segons API, estadístiques
 SMTP separades de campanyes, cache breu i errors parcials. PWA estàtica
 amb manifest, icones pròpies, offline sense dades privades i actualització
 controlada. Compose, Docker multi-stage i exemple de Caddy disponibles.
@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-45 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+68 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -180,9 +180,9 @@ capçalera JSON sense cos; la verificació final completa ha passat.
 
 Operació administrativa puntual amb eines locals excloses de Git,
 no una funcionalitat de recuperació pública ni un reset distribuït.
-Aquesta nota és local: no s'ha publicat ni desplegat cap canvi de codi.
+L'operació no va requerir publicar ni desplegar canvis de codi.
 
-## Configuració ampliada i avisos — només local
+## Configuració ampliada i avisos
 
 2026-10-17, tasca aprovada amb GPT-6.1 Sol / Extra High. Decisions:
 comptes dinàmics, pla/volum com a referència sense alterar saldo API,
@@ -220,10 +220,41 @@ Correus i push provats amb emissors simulats: cap càrrec ni enviament real.
 Registre i baixa del dispositiu i permís denegat comprovats amb PushManager
 simulat al navegador. Avisos de llicència de web-push (MPL-2.0) preservats,
 separats de la llicència del codi propi.
-Pendent entrega real per canal, Safari/iPhone instal·lat i verificació Linux
-de la nova persistència abans de desplegar. Documentació d'instal·lació,
+Pendent entrega real per canal i Safari/iPhone instal·lat. Documentació d'instal·lació,
 seguretat i retorn de versió actualitzada.
 
-No publicat ni desplegat. Producció, contrasenya recuperada, secrets,
-comptes, Caddy i DNS no modificats per aquesta tasca. Cal aprovació per
-publicar/desplegar i configurar l'activació real dels avisos.
+### Publicació i desplegament verificats
+
+Publicació i desplegament aprovats amb GPT-6.1 Sol / High el 2026-10-17.
+Commit públic de funcionalitat `e201b6c`, només a `main`. Clonació neta
+des de GitHub amb `npm ci --include=optional` i 68 proves, tipus, compilació
+i límits de secrets superats. Historial públic verificat: arrel separada,
+autoria noreply i 291 objectes sense coincidències amb els secrets coneguts.
+La revisió és dirigida, no una auditoria externa ni garantia absoluta.
+
+Paquet sense canvis locals pendents, SHA-256 comprovat abans d'extreure.
+Imatge construïda a Linux, Node 24.21.0, usuari 1000, arrel readonly,
+mateix muntatge privat separat d'escriptura i bootstrap/claus readonly.
+Còpia privada de la configuració, hash recuperat, noms i referències de
+retorn conservada abans del canvi; imatge i release anteriors preservats.
+La candidata, sense xarxa, ha llegit la configuració real en només lectura
+i provat xifrat/reinici amb claus sintètiques, VAPID i persistència de
+hash/noms en un directori temporal separat, eliminat després de la prova.
+Els fitxers privats reals han conservat exactament el contingut anterior.
+Avisos de web-push i el seu codi font original presents a runtime.
+
+Activada la versió `20261017t105816z-d2fa6c51`, contenidor saludable i
+enllaç de versió actualitzat.
+Només s'ha reiniciat la MiniApp: sessions revocades, mateixa contrasenya,
+secret de sessió, claus i noms. Només el tag de `compose.env` ha canviat;
+`runtime.env`, Caddy, DNS i serveis aliens intactes. No s'ha creat encara
+el magatzem xifrat real: es crearà en el primer desament des de l'app.
+`ENABLE_NOTIFICATIONS` continua desactivat; no s'han enviat correus ni push.
+
+HTTPS públic verificat amb Chrome mòbil: login, manifest, icones, worker,
+offline estàtic i represa. HTML, JavaScript, CSS, worker i recursos comparats
+byte a byte amb la compilació verificada. Tretze endpoints examinats sense
+sessió rebutjats amb `401` i `no-store`, inclosos comptes, configuració,
+remitents i operacions push. No s'ha iniciat sessió ni consultat dades
+reals per HTTPS en aquesta comprovació. Queden pendents el login de
+l'usuari després del reinici i l'entrega real de cada canal amb aprovació.

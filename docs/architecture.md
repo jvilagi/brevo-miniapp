@@ -7,7 +7,7 @@ les respostes reals dels dos comptes es va fer el mateix dia; vegeu
 ## Producte i interfície
 
 Una pantalla principal amb una targeta per compte (dos inicials, fins a
-25 configurables en la versió local nova). Cada targeta
+25 configurables des de l'app). Cada targeta
 mostra nom, enviaments d'avui, règim de quota, saldo disponible i barra
 de consum quan se'n conegui una referència vàlida.
 
@@ -80,11 +80,13 @@ No s'envien canvis de nom a Brevo ni es desa configuració al navegador.
 La nova configuració dinàmica importa aquests noms; el fitxer anterior
 només es conserva com a bootstrap i no es torna a escriure.
 
-## Configuració dinàmica i avisos (local, pendent de desplegar)
+## Configuració dinàmica i avisos
 
 Tasca aprovada el 2026-10-17: formulari privat de claus, comptes afegibles,
 referències de pla/volum, icones/colors i avisos per correu i push amb
 l'app tancada. Disseny Comptes/Avisos aprovat, estil existent preservat.
+Publicat i desplegat el mateix dia a partir del commit `e201b6c`;
+avisos reals desactivats fins a configurar i validar els canals.
 
 `Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
 atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:
@@ -111,6 +113,10 @@ requereix iOS 16.4+ i instal·lació a la pantalla d'inici. Les subscripcions
 no caduquen amb el logout; revocació per dispositiu o gate global de servidor.
 Historial de 100 intents, no una prova d'entrega ni garantia exactly-once.
 Canals provats amb dobles, sense correus o push reals. iPhone real pendent.
+La imatge candidata ha comprovat a Linux la lectura de la configuració
+existent i la persistència xifrada amb dades sintètiques, sense xarxa i
+sense alterar fitxers privats reals. HTTPS, protecció dels endpoints i
+PWA verificats després del desplegament; no s'ha fet login públic real.
 
 Comptador d'«Actualitza» des de l'última resposta vàlida amb alguna secció
 fresca, no des de la data de cada font. No es reinicia amb errors de xarxa

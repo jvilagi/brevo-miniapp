@@ -56,13 +56,14 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 
 - Comprovació de sessió, pantalla de contrasenya i errors d'accés.
 - «Configuració» al costat de «Canvia la contrasenya», sota les targetes:
-  ubicació i estil aprovats el 2026-10-04. Ampliació local aprovada el
+  ubicació i estil aprovats el 2026-10-04. Ampliació aprovada el
   2026-10-17: seccions Comptes/Avisos, llista ordenable i editor privat
   de comptes, icones/colors, pla de referència, llindars, correu i push.
   Galeria de sis icones pròpies i sis colors; només identitat del compte,
   sense canviar la semàntica de colors de les mètriques.
   Claus sempre emmascarades i no retornades, contrasenya per operacions
   sensibles, confirmació de desconnexió i prova de correu amb cost.
+  Ampliació publicada i desplegada el 2026-10-17; avisos reals desactivats.
 - Comptador discret al costat d'«Actualitza» (a sota al mòbil), amb segons,
   minuts, hores i dies; sense anuncis cada segon als lectors de pantalla.
   Mesura l'última consulta correcta, no l'edat de totes les dades Brevo.
