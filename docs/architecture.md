@@ -94,6 +94,16 @@ sense sumar-les. Una subscripció zero amb reserva només es conserva com
 a tal amb context explícit de pagament actiu i període vàlid; el patró
 prepagament anterior es manté sense aquest context. Vegeu la validació API.
 
+Correcció local posterior del mateix dia: ordre visual prepagament/pla,
+text neutral i etiqueta «Emails del pla». La prioritat de facturació no
+es dedueix de `plan.type`, del pla manual ni d'una vertical `paid`: el
+prepagament també pot donar accés a funcions de pagament. No es modifica
+la normalització dels imports ni s'implementa cap descompte local.
+Pendent de publicar/desplegar aquesta correcció de presentació.
+La referència manual Free adapta només el text i la font del saldo del
+pla quan hi ha prepagament: no són saldos simultàniament utilitzables.
+No canvia la quota normalitzada ni activa Free en esgotar crèdits.
+
 `Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
 atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:
 backup conjunt i migració abans de rotar-lo. El primer desament importa

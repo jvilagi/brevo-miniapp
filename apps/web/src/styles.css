@@ -57,9 +57,7 @@ h1, h2, h3, p { margin: 0; }
 .account-numbers strong { font-size: clamp(34px,4vw,44px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -1.7px; line-height: 1.25; margin: 5px 0; overflow-wrap: anywhere; }
 .balance-number strong, .prepaid-number strong { color: var(--forest); }
 .account-numbers.has-subscription .today-number { grid-column: 1 / -1; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-.account-numbers.has-subscription .balance-number { border-left: 0; padding-left: 0; }
 .account-numbers.has-subscription .balance-number .number-label, .prepaid-number .number-label { min-height: 3em; }
-.prepaid-number { border-left: 1px solid var(--border); padding-left: 20px; }
 .number-source { color: var(--muted); font-size: 10px; line-height: 1.5; }
 .provenance { display: block; color: var(--muted); font-size: 10px; line-height: 1.6; margin-top: 6px; }
 .provenance.is-warning { color: #7c5714; }

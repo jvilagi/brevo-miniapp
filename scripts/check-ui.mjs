@@ -215,9 +215,11 @@ async function verify(browserType, label, executablePath) {
     await noOverflow(page); await page.screenshot({ path: join(directory, `${label}-overview.png`), fullPage: true });
     let balanceFixture = { regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 4800 };
     let balanceStatus = 'fresh';
+    let declaredPlan = 'auto';
     await page.route('**/api/accounts', async route => {
       const monthly = structuredClone(fixture);
       monthly.accounts[0].quota = { ...section(balanceFixture), status: balanceStatus };
+      monthly.accounts[0].reference = { kind: declaredPlan, allowance: null, renewalDay: null };
       await route.fulfill({ json: monthly });
     });
     const refreshBalances = async () => {
@@ -227,16 +229,32 @@ async function verify(browserType, label, executablePath) {
     await refreshBalances();
     await page.locator('.account-1 .prepaid-number strong').getByText('4.800', { exact: true }).waitFor();
     assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '1.200');
-    assert.equal(await page.locator('.account-1 .balance-number .number-label').innerText(), 'Emails de subscripció');
+    assert.equal(await page.locator('.account-1 .balance-number .number-label').innerText(), 'Emails del pla');
+    assert.equal(await page.locator('.account-1 .plan-badge').innerText(), 'Pla + prepagament');
+    assert.deepEqual(await page.locator('.account-1 .account-numbers > div').evaluateAll(elements => elements.map(element => element.className)), ['today-number', 'prepaid-number', 'balance-number']);
+    assert(!/primer els emails|després els crèdits/.test(await page.locator('.account-1 .account-note').innerText()));
     assert.equal(await page.locator('.account-1 .prepaid-number .number-label').innerText(), 'Crèdits prepagament');
     assert.equal(await page.locator('.account-1 .today-number strong').innerText(), '150');
     for (const width of [320, 375, 390, 430, 760, 761, 1280]) {
       await page.setViewportSize({ width, height: 900 }); await noOverflow(page);
-      const left = await page.locator('.account-1 .balance-number strong').boundingBox(), right = await page.locator('.account-1 .prepaid-number strong').boundingBox();
-      assert(left && right && left.x < right.x && Math.abs(left.y - right.y) < 2, 'Saldos independents alineats');
+      const left = await page.locator('.account-1 .prepaid-number strong').boundingBox(), right = await page.locator('.account-1 .balance-number strong').boundingBox();
+      assert(left && right && left.x < right.x && Math.abs(left.y - right.y) < 2, 'Prepagament primer, saldos independents alineats');
       if ([390, 1280].includes(width)) { await page.waitForTimeout(150); await page.locator('.account-1').screenshot({ path: join(directory, `${label}-dual-balance-${width}.png`) }); }
     }
     await page.setViewportSize({ width: 390, height: 844 });
+    balanceFixture = { ...balanceFixture, prepaidAvailable: 4781 }; await refreshBalances();
+    await page.locator('.account-1 .prepaid-number strong').getByText('4.781', { exact: true }).waitFor();
+    assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '1.200', 'Consum prepagament no resta emails del pla');
+    assert.equal(await page.locator('.account-1 .today-number strong').innerText(), '150', 'No es reconcilia el saldo restant SMTP');
+    declaredPlan = 'free'; balanceFixture = { ...balanceFixture, available: 285 }; await refreshBalances();
+    assert.match(await page.locator('.account-1 .account-note').innerText(), /Pla declarat Free/);
+    assert.match(await page.locator('.account-1 .account-note').innerText(), /No són dos saldos disponibles alhora/);
+    assert.match(await page.locator('.account-1 .balance-number .number-source').innerText(), /no s’afegeix al prepagament/);
+    assert.equal(await page.locator('.account-1 .prepaid-number strong').innerText(), '4.781');
+    assert.equal(await page.locator('.account-1 .balance-number strong').innerText(), '285', 'Declarar Free no força un saldo de 300');
+    await noOverflow(page); await page.locator('.account-1').screenshot({ path: join(directory, `${label}-free-prepaid-390.png`) });
+    declaredPlan = 'auto';
+    balanceFixture = { ...balanceFixture, prepaidAvailable: 4800 }; await refreshBalances();
     balanceFixture = { ...balanceFixture, available: 0 }; await refreshBalances();
     await page.locator('.account-1 .balance-number strong').getByText('0', { exact: true }).waitFor();
     assert.equal(await page.locator('.account-1 .prepaid-number strong').innerText(), '4.800');

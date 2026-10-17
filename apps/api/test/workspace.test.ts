@@ -157,7 +157,7 @@ test('avisos: subscripció esgotada explicita els crèdits de reserva, sense sum
   await new AlertMonitor(workspace, async () => [{ id: '1', quota: { status: 'fresh', updatedAt: new Date().toISOString(), error: null,
     data: { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: 4800 } } }],
   { async send(_key, _sender, _recipient, _subject, text) { message = text; } }).tick();
-  assert.match(message, /subscripció segons Brevo 0/); assert.match(message, /prepagament 4800/);
+  assert.match(message, /prepagament segons Brevo 4800; emails del pla 0/);
 });
 test('avisos: errors d’enviament i timeouts no es reintenten immediatament', async t => {
   const { workspace } = await configured(t); let calls = 0;

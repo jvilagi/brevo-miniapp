@@ -30,10 +30,20 @@ test('saldo Free independent del dia SMTP i sense hora de reinici no verificada'
   assert(!JSON.stringify(free).match(/00:00|GMT|Disponibles avui/));
   assert.equal(quotaPresentation({ regime: 'free', available: 300, dailyLimit: 300 }).available, 300);
 });
-test('saldo mensual segons API separat de la reserva prepagament', () => {
+test('saldos del pla i prepagament separats, sense imposar ordre de consum', () => {
   const monthly = quotaPresentation({ regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 400 });
   assert.equal(monthly.available, 1200); assert.equal(monthly.fraction, null);
-  assert.equal(monthly.title, 'Emails de subscripció'); assert.match(monthly.note, /saldos es mostren separats/); assert.notEqual(monthly.available, 1600);
+  assert.equal(monthly.title, 'Emails del pla'); assert.equal(monthly.badge, 'Pla + prepagament');
+  assert.match(monthly.note, /saldos es mostren separats/); assert.match(monthly.note, /Brevo determina quin saldo es consumeix/);
+  assert(!/primer|després|reserva|mensual/.test(monthly.note)); assert.notEqual(monthly.available, 1600);
+  assert.match(monthly.note, /En Free, el prepagament substitueix els 300/);
+  const declaredFree = quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: 400 }, 'free');
+  assert.equal(declaredFree.available, 285); assert.equal(declaredFree.fraction, null);
+  assert.match(declaredFree.note, /Pla declarat Free/); assert.match(declaredFree.note, /No són dos saldos disponibles alhora/);
+  assert.match(declaredFree.source, /no s’afegeix al prepagament/);
+  assert.equal(quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: 0 }, 'free').available, 285);
+  assert.match(quotaPresentation({ regime: 'prepaid', available: 0, dailyLimit: null }, 'free').note, /zero no l’activa automàticament/);
+  assert.equal(quotaPresentation({ regime: 'unknown', available: null, dailyLimit: null }, 'free').available, null);
   const unknownReserve = quotaPresentation({ regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: null });
   assert.equal(unknownReserve.available, 0); assert.match(unknownReserve.note, /no se suposa que sigui zero/);
 });

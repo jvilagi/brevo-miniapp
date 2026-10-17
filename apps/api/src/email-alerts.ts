@@ -113,7 +113,7 @@ export class AlertMonitor {
               ready.push(key);
               const data = quota?.data;
               lines.push(type === 'connection' ? `${account.name}: no s’obtenen dades fresques des de fa almenys 15 minuts.` :
-                data?.regime === 'subscription' ? `${account.name}: emails restants de subscripció segons Brevo ${available}; crèdits prepagament ${data.prepaidAvailable ?? 'no disponibles'}.` :
+                data?.regime === 'subscription' ? `${account.name}: crèdits prepagament segons Brevo ${data.prepaidAvailable ?? 'no disponibles'}; emails del pla ${available}.` :
                 `${account.name}: saldo segons Brevo ${available}.`);
             }
           }

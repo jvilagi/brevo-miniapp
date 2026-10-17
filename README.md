@@ -64,11 +64,17 @@ han de viure fora del codi i de la imatge Docker.
   icona i color, ordenar-los i desconnectar-los només de la MiniApp.
   El pla i el volum contractat manuals són una referència per als avisos,
   no substitueixen el saldo retornat per Brevo ni compren crèdits.
+  Si el compte és Free amb crèdits comprats, tria «Free» al pla de
+  referència: l'explicació indicarà que el prepagament substitueix la
+  quota diària, sense canviar cap import ni activar-la automàticament.
   Configuració privada xifrada al servidor, compartida entre dispositius.
   Al costat d'«Actualitza», un comptador mostra el temps des de l'última
   consulta correcta; no és l'edat de cada dada ni afegeix polling.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
   calcula com `300 - enviats` ni se sumen crèdits prepagament i quota Free.
+  Quan Brevo retorna saldo del pla i prepagament, es mostren separats,
+  amb el prepagament primer a la vista. Aquesta disposició no imposa
+  una regla universal de facturació ni modifica els saldos retornats.
   L'hora exacta de reinici Free no està verificada; la pantalla no la
   promet ni assumeix que el saldo i les estadístiques canvien alhora.
 - SMTP i campanyes de màrqueting són fonts separades. Els totals únics

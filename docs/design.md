@@ -87,6 +87,16 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
   de subscripció» i «Crèdits prepagament». Estil i paleta existents, sense
   sumar-los. Tots dos conserven l'estat i timestamp de la quota; absència
   de reserva és «—», no zero. El camp manual continua sent una referència.
+- Correcció local posterior del 2026-10-17, pendent de publicar/desplegar:
+  crèdits prepagament primer (també en l'ordre de lectura accessible),
+  «Emails del pla» després i distintiu «Pla + prepagament». Eliminada
+  l'afirmació general que el pla es consumeix primer. El text deixa clar
+  que l'API proporciona els saldos i que l'ordre visual no decideix el
+  consum. Mateixa paleta i distribució de dues columnes, sense càlculs.
+  Si la referència del compte és Free, explicació específica que els
+  crèdits substitueixen els 300 emails/dia; el saldo del pla retornat no
+  s'afegeix al prepagament. Sense referència es formula en condicional.
+  Ajuda afegida al selector existent, sense nous controls ni canvis de saldos.
 - Desplegable amb Avui / Últims 7 dies, mètriques de l'agregat i totes
   les mètriques opcionals. Les úniques no se sumen ni s'etiqueten com
   a persones úniques o obertures estimades.
@@ -159,6 +169,11 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.
+- Correcció local de l'ordre: prepagament abans del pla en el DOM i a
+  la vista, imports alineats a 320–1280 px i disminució del prepagament
+  sense restar saldo del pla o relacionar-lo amb SMTP. Etiquetes neutrals
+  comprovades; captures mòbil/escriptori revisades. UI/PWA superats;
+  aquesta correcció continua pendent de publicar/desplegar.
 - `scripts/check-pwa.mjs`: manifest, icones, cache limitada a estàtics,
   dades autenticades mai cachejades, offline, represa, logout i nova
   versió activada únicament després d'acceptar l'avís.

@@ -36,7 +36,7 @@ plans existents, sense desar payloads complets ni valors personals. Es
 manté el patró de prepagament amb entrada de subscripció zero al primer
 compte i Free al segon. En aquella lectura encara no s'havia observat un
 saldo de subscripció positiu. Una consulta posterior del mateix dia ha
-confirmat una subscripció amb saldo positiu i crèdits prepagament simultanis,
+confirmat una entrada `subscription` amb saldo positiu i crèdits prepagament simultanis,
 amb vertical Marketing de pagament activa; l'altre compte continua Free.
 No es documenta aquí cap saldo, nom privat ni període personal.
 
@@ -58,6 +58,40 @@ ni reiniciar crèdits. Sense aquest context, no es transforma un placeholder
 zero en una subscripció activa. Un saldo absent es mostra com a desconegut.
 El dia de renovació introduït manualment és només una referència, no
 una data acreditada de l'API ni una regla per restablir saldo.
+
+### Correcció de l'ordre de presentació (local)
+
+Revisió posterior del 2026-10-17: una nova consulta GET confirma que el
+saldo prepagament ha disminuït mentre l'entrada `subscription` es manté
+igual. No s'ha enviat cap correu de prova. Això acredita moviment entre
+dues lectures, no una regla universal ni l'activació futura d'una quota.
+Els noms, saldos i períodes privats no s'incorporen a aquest document.
+
+El text desplegat afirmava que primer es consumia el pla. Era una
+generalització incorrecta: la documentació dels complements distingeix
+entre plans mensuals de pagament (pla primer) i Free amb prepagament
+(els crèdits substitueixen la quota diària). A més, el prepagament dona
+accés a funcions Starter: `planType=paid` i dates no acrediten per si sols
+una subscripció mensual ni la prioritat de consum d'un compte.
+
+Correcció local pendent de publicar i desplegar: prepagament primer a
+la vista i «Emails del pla» després, distintiu «Pla + prepagament» quan
+es retornen tots dos saldos i explicació neutral. L'ordre visual no és
+una simulació de facturació. Es mantenen els imports de cada resposta,
+sense sumar-los ni restar activitat SMTP, sense canviar la normalització
+o els llindars d'avís, ni convertir automàticament un saldo zero a Free.
+Una entrada `subscription` es presenta com a saldo del pla, no com a
+quota mensual o emails necessàriament utilitzables alhora amb prepagament.
+
+Confirmat posteriorment pel responsable: el compte examinat és Free
+amb crèdits comprats, no una subscripció mensual. Per això no es pot
+generalitzar aquella entrada `subscription` a un contracte mensual real.
+La referència «Free» ja disponible a Configuració adapta ara només
+l'explicació: el prepagament substitueix la quota diària i els dos saldos
+no estan disponibles alhora. La referència no sobreescriu el saldo ni
+força `regime=free`, i un zero prepagament no activa la quota diària.
+Sense referència explícita es mostra la regla Free en condicional, no
+s'identifica cap compte per nom/id ni s'infereix Free perquè retorni 300.
 
 ## Estadístiques
 

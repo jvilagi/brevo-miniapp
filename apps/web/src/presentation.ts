@@ -1,4 +1,4 @@
-import type { DataSection, Quota, SmtpMetric } from '@brevo-miniapp/contracts';
+import type { DataSection, PlanReference, Quota, SmtpMetric } from '@brevo-miniapp/contracts';
 
 export const number = (value: number | null | undefined) => value === null || value === undefined ? '—' : new Intl.NumberFormat('ca-ES').format(value);
 export function elapsedLabel(since: number, now: number) {
@@ -24,11 +24,14 @@ export function zoneLabel(timezone: string) {
   return new Intl.DateTimeFormat('ca-ES', { timeZone: timezone, timeZoneName: 'shortOffset' }).formatToParts(new Date())
     .find((part) => part.type === 'timeZoneName')?.value ?? timezone;
 }
-export function quotaPresentation(quota: Quota | null) {
-  if (quota?.regime === 'subscription') return { title: 'Emails de subscripció', badge: 'Subscripció', available: quota.available, fraction: null,
-    source: 'Restants segons Brevo', note: quota.prepaidAvailable !== null ? 'Brevo consumeix primer els emails del pla i després els crèdits prepagament. Els saldos es mostren separats.' : 'El saldo prepagament no està disponible a la resposta de Brevo; no se suposa que sigui zero.' };
+export function quotaPresentation(quota: Quota | null, declaredPlan: PlanReference['kind'] = 'auto') {
+  if (quota?.regime === 'subscription') return { title: 'Emails del pla', badge: quota.prepaidAvailable !== null ? 'Pla + prepagament' : 'Subscripció', available: quota.available, fraction: null,
+    source: declaredPlan === 'free' && quota.prepaidAvailable !== null ? 'Saldo retornat · no s’afegeix al prepagament' : 'Restants segons Brevo',
+    note: quota.prepaidAvailable === null ? 'El saldo prepagament no està disponible a la resposta de Brevo; no se suposa que sigui zero.' :
+      declaredPlan === 'free' ? 'Pla declarat Free: els crèdits prepagament substitueixen els 300 emails/dia. No són dos saldos disponibles alhora. Brevo ha de confirmar el retorn a Free.' :
+        'Els saldos es mostren separats. En Free, el prepagament substitueix els 300 emails/dia; no s’hi afegeixen. Brevo determina quin saldo es consumeix.' };
   if (quota?.regime === 'prepaid') return { title: 'Crèdits disponibles', badge: 'Prepagament', available: quota.available, fraction: null,
-    source: 'Saldo prepagament', note: 'Saldo prepagament segons Brevo. No s’hi afegeix cap quota diària.' };
+    source: 'Saldo prepagament', note: declaredPlan === 'free' ? 'Pla declarat Free: el prepagament substitueix els 300 emails/dia. Brevo ha de confirmar el retorn a Free; un saldo zero no l’activa automàticament.' : 'Saldo prepagament segons Brevo. No s’hi afegeix cap quota diària.' };
   if (quota?.regime === 'free') return { title: 'Saldo disponible', badge: 'Free · 300/dia', available: quota.available,
     source: 'Segons Brevo · quota de 300/dia',
     note: 'Brevo gestiona el reinici diari. L’hora exacta no està verificada.',

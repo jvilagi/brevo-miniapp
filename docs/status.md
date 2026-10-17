@@ -319,3 +319,38 @@ fet login públic ni consultat dades reals per HTTPS en aquesta comprovació.
 L'usuari ha de tornar a entrar i acceptar «Actualitza l'app» si la PWA
 conserva la versió anterior. Safari/iPhone real i entrega real dels canals
 continuen pendents.
+
+## Correcció de la prioritat mostrada — local
+
+2026-10-17, tasca aprovada amb GPT-6.1 Sol / High. Nou GET dels dos
+comptes, sense claus o payloads complets als logs ni dades privades a la
+documentació. Entre lectures disminueix el prepagament i es manté el
+saldo del pla al compte examinat. El text desplegat afirmava pla primer:
+s'havia generalitzat una regla de subscripcions mensuals que no es pot
+aplicar a tots els comptes amb crèdits comprats.
+
+Documentació oficial revisada: pla mensual i Free amb prepagament tenen
+regles diferents; una vertical `paid` no acredita tota sola pagament
+mensual. Correcció local: prepagament primer a la targeta i al text dels
+avisos, «Emails del pla» i distintiu «Pla + prepagament», amb explicació
+neutral. Imports de Brevo conservats; cap suma, descompte local, reinici
+o retorn a Free inferit. Llindars dels avisos i normalització no canviats.
+
+El responsable ha confirmat Free amb crèdits comprats, no quota mensual.
+La referència «Free» existent a Configuració adapta el text: prepagament
+en lloc de quota diària, mai dos saldos utilitzables alhora. Sense aquesta
+referència, explicació condicional; cap id/nom privat codificat. No s'ha
+desat configuració privada al servidor ni forçat Free o un import de 300.
+Proves específiques de referència Free: imports retornats conservats,
+saldo absent desconegut, zero prepagament sense activació Free i explicació
+de substitució a la targeta. Ajuda del selector i captura mòbil amb dades
+sintètiques comprovades, sense identificar el compte privat al codi.
+
+Proves ampliades per comprovar ordre visual i de lectura accessible i que una
+disminució sintètica del prepagament no canvia el saldo del pla ni les
+sol·licituds SMTP. 70 proves, tipus, compilació i límits de secrets
+superats. Chrome UI/PWA superats: ordre i alineació 320–1280 px, absència
+de dades, saldos zero, dades antigues, regressions, offline i actualització
+controlada. Captures sintètiques mòbil/escriptori revisades visualment.
+Aquesta correcció encara no s'ha publicat ni desplegat; producció no
+modificada, avisos encara desactivats i cap correu o push real enviat.

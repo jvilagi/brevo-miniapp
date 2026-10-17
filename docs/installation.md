@@ -169,7 +169,13 @@ El **pla contractat**, el **volum** i el **dia de renovació** manuals són
 referències teves, no una compra ni una modificació del pla real. Defineix
 llindars de saldo absolut o percentatge del volum configurat; el percentatge
 requereix un volum positiu. El saldo sempre prové de Brevo: mai `300 - enviats`.
-La subscripció i la reserva prepagament es presenten separadament, no sumades.
+El saldo del pla i el prepagament es presenten separadament, no sumats.
+Si tens Free amb crèdits comprats, selecciona **Free** com a referència:
+l'explicació indicarà que el prepagament substitueix els 300 emails/dia,
+no que estan disponibles alhora. Això no altera els imports retornats
+ni activa la quota Free quan el prepagament arriba a zero; cal que Brevo
+confirmi el règim. No triïs «Subscripció mensual» només perquè l'API
+retorni una entrada anomenada `subscription`.
 
 La configuració, les claus i les subscripcions push es desen xifrades amb
 AES-256-GCM a `access/workspace.sealed.json` (`0600`, directori `0700`),
