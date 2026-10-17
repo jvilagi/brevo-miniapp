@@ -113,7 +113,7 @@ En la versió `8510a86`, la referència manual Free adaptava només el text i la
 pla quan hi ha prepagament: no són saldos simultàniament utilitzables.
 No canvia la quota normalitzada ni activa Free en esgotar crèdits.
 
-Ajust local posterior: `activeBalance` compartit selecciona el saldo per
+Ajust posterior: `activeBalance` compartit selecciona el saldo per
 a targeta i avisos. Amb referència explícita Free i prepagament retornat,
 usa els crèdits (també zero), mai el saldo del pla com a substitut si la
 reserva és absent. Percentatge del volum Free ignorat en aquest règim;
@@ -136,7 +136,10 @@ ha data. Error del fitxer només inhabilita previsió i no bloqueja l'app.
 `lowDays` opcional (1–365, per defecte nul) afegeix avís anticipat amb
 prepagament actiu i estimació fresca; el llindar de crèdits té prioritat.
 Incidents conserven la base del saldo i reconeixen canvis de règim.
-Ajust implementat i provat localment, encara no publicat ni desplegat.
+Ajust publicat i desplegat el 2026-10-17 des de `4466941`, amb 88 proves
+repetides a Linux. Referència privada Free aplicada amb autorització;
+només aquest camp i la revisió del workspace han canviat, amb els nous
+llindars opcionals nuls. Claus, hash i avisos desactivats conservats.
 
 `Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
 atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:

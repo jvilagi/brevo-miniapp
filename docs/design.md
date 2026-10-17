@@ -100,7 +100,7 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
 - Desplegable amb Avui / Últims 7 dies, mètriques de l'agregat i totes
   les mètriques opcionals. Les úniques no se sumen ni s'etiqueten com
   a persones úniques o obertures estimades.
-- Ajust local posterior del 2026-10-17: targetes plegades uniformes,
+- Ajust posterior del 2026-10-17: targetes plegades uniformes,
   mateixes files i alçada en mòbil i escriptori. Només dos números al
   resum: sol·licituds avui i saldo actiu, amb font i actualització.
   Free amb prepagament: distintiu propi i crèdits com a saldo actiu;
@@ -109,7 +109,7 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
   «Recollint historial» si no n'hi ha prou i «No aplicable» per quota
   diària. No s'inventa barra per als crèdits sense volum verificat.
   Configuració permet llindar opcional de dies; estil i paleta preservats.
-  Aquest ajust encara no està publicat ni desplegat.
+  Ajust publicat i desplegat des de `4466941`, amb comprovació HTTPS.
 - Gràfic SVG dels set dies amb selector de mètrica, selecció directa
   tocant el gràfic i botons tàctils per
   triar dia i taula accessible. Els buits no s'interpolen com a zero.

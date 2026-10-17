@@ -454,7 +454,7 @@ amb crèdits comprats. Documentació oficial revisada: Free substituït pel
 prepagament, no suma; els crèdits comprats no caduquen. La data d'esgotament
 serà estimada, no una data de caducitat de Brevo.
 
-Implementat localment: selector compartit de saldo actiu amb referència
+Implementat: selector compartit de saldo actiu amb referència
 Free explícita; saldo normalitzat intacte i altres imports als detalls.
 Targetes plegades de mateixa mida i blocs comuns, desplegables independents.
 Avisos de crèdits en lloc del saldo del pla per Free amb prepagament;
@@ -475,11 +475,52 @@ igualtat de mides a 320–1280 px, saldo actiu, zero, absència, antiguitat,
 previsió, configuració, sessions, offline i actualització controlada.
 Captures mòbil i escriptori revisades. Safari/iPhone real pendent.
 
-Encara no publicat ni desplegat: producció continua a la versió anterior.
-Cal identificar explícitament com a Free el compte confirmat pel responsable
-quan s'apliqui la configuració; no es dedueix del nom, id ni saldo 300.
-En aquesta tasca només s'han llegit dades reals. Cap canvi de configuració
-privada, claus o contrasenya, cap avís real ni activació dels canals.
+La implementació inicial només havia llegit dades reals. La publicació,
+el desplegament i aplicar la referència privada Free al compte confirmat
+s'han autoritzat posteriorment; no es dedueix del nom, id ni saldo 300.
 El responsable confirma que es refereix als avisos de la MiniApp, no a
 correus del proveïdor Brevo. L'ajust afecta només les regles de la MiniApp;
 no cal modificar preferències ni avisos del compte a Brevo.
+
+### Publicació i desplegament verificats
+
+2026-10-17: commit públic `4466941`, només a `main`. Clonació nova amb
+99 fitxers públics i 432 objectes d'historial revisats sense coincidències
+amb secrets coneguts ni patrons privats examinats. Arrel pública separada,
+autoria noreply, cap branca o tag privat descarregat. Revisió dirigida,
+no una auditoria externa. Paquet del commit net i SHA-256 verificat.
+
+Repetides les 88 proves, tipus, compilació i límits de secrets a Linux,
+amb uid 1000, treball temporal, sense secrets ni xarxa externa. Candidata
+amb lectura readonly de la configuració real i persistència sintètica
+separada de workspace, hash, noms i nou historial xifrat de saldo.
+Comprovats reinici de l'historial, previsió sintètica i selecció Free amb
+prepagament. Fitxers privats reals intactes durant aquestes comprovacions.
+
+Activada la versió `20261017t174649z-367af77a`, saludable. Referència Free
+aplicada al compte autoritzat amb l'app aturada per evitar concurrència;
+només aquest camp, la revisió i els nous valors nuls opcionals del format
+han canviat. Tot l'estat privat resultant comprovat després de tornar a
+llegir-lo. Claus, hash persistent, secret de sessió, noms, aparença,
+llindars i canals preservats. Avisos encara desactivats: cap correu ni
+push real. Sessions revocades pel reinici, mateixa contrasenya.
+Aquest desament ha creat el workspace xifrat a partir del bootstrap i
+els noms existents; la còpia anterior conserva l'estat sense aquest fitxer.
+
+Lectura GET de quotes reals al servidor, sense imprimir imports o dades
+personals: saldo fresc, crèdits prepagament seleccionats i idèntics a Brevo,
+quota diària no seleccionada com a saldo actiu. La previsió comença sense
+historial; les lectures normals de l'app desen mostres al fitxer privat.
+No s'han importat ni inventat mostres anteriors.
+
+HTTPS comprovat: HTML, JavaScript, CSS, worker i recursos idèntics al build;
+13 endpoints privats sense sessió rebutjats amb `401` i `no-store`.
+Chrome mòbil ha comprovat login, manifest, icones, worker, offline estàtic,
+represa automàtica i `/?recovery=1`, sense cache d'API ni dades privades.
+Cap login públic amb la contrasenya real en aquestes comprovacions.
+Còpia privada de recuperació, release i imatge anteriors conservats.
+El format nou del workspace exigeix revisar/restaurar una còpia compatible
+abans de retornar a una versió antiga; no s'han de perdre canvis posteriors.
+Caddy, DNS i serveis aliens no modificats. Safari/iPhone real i entrega
+real dels canals continuen pendents; cal acceptar l'actualització de la
+PWA i tornar a entrar després del reinici.
