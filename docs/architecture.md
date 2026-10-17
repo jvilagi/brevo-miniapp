@@ -30,7 +30,8 @@ i està implementada; criteris i verificació a [`design.md`](design.md).
   consulta, amb data d'actualització i tractament d'errors parcials.
 - Actualització en reprendre l'app; evita consultes periòdiques quan
   està oculta. Les consultes simultànies es reutilitzaran al servidor.
-- Inicialment sense base de dades: Brevo proporciona l'històric consultat.
+- Sense base de dades relacional: Brevo proporciona l'històric SMTP;
+  fitxers privats xifrats per a configuració i mostres de saldo prepagament.
 - Accés privat amb hash de contrasenya, sessió segura i límit d'intents.
 - PWA amb manifest standalone, icones 192/512, apple-touch-icon,
   espais segurs i service worker només per a recursos estàtics.
@@ -44,12 +45,12 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 60 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
+Hi ha 72 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
 límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 15 proves de peticions/presentació/worker i la
+verificat amb els dos comptes reals. Hi ha 16 proves de peticions/presentació/worker i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
@@ -108,9 +109,34 @@ es dedueix de `plan.type`, del pla manual ni d'una vertical `paid`: el
 prepagament també pot donar accés a funcions de pagament. No es modifica
 la normalització dels imports ni s'implementa cap descompte local.
 Publicada i desplegada des del commit `8510a86`.
-La referència manual Free adapta només el text i la font del saldo del
+En la versió `8510a86`, la referència manual Free adaptava només el text i la font del saldo del
 pla quan hi ha prepagament: no són saldos simultàniament utilitzables.
 No canvia la quota normalitzada ni activa Free en esgotar crèdits.
+
+Ajust local posterior: `activeBalance` compartit selecciona el saldo per
+a targeta i avisos. Amb referència explícita Free i prepagament retornat,
+usa els crèdits (també zero), mai el saldo del pla com a substitut si la
+reserva és absent. Percentatge del volum Free ignorat en aquest règim;
+llindar absolut en crèdits. Imports normalitzats intactes i disponibles
+als detalls. Cap detecció Free a partir de 300 ni d'una vertical `paid`.
+Les targetes plegades comparteixen blocs i mida, també en una columna;
+obrir-ne una no estira artificialment les altres.
+
+`PrepaidHistory` desa mostres numèriques xifrades al costat del workspace,
+amb HKDF/AAD separats, permisos privats i cua d'escriptura, sense canviar
+la revisió de Configuració. Mostres de lectures de quota existents, no
+polling addicional ni dades SMTP. Màxim 60 mostres/compte i finestra de
+29 dies en registrar; nova sèrie amb recàrrega, absència de saldo o buit
+superior a 36 hores. Empremtes de credencial privades separen substitucions.
+
+Previsió amb almenys 7 dies transcorreguts i 8 dates observades, consum
+net positiu i horitzó ≤ 365 dies. Data orientativa, no caducitat ni
+garantia; els crèdits comprats no caduquen. Sense dades suficients no hi
+ha data. Error del fitxer només inhabilita previsió i no bloqueja l'app.
+`lowDays` opcional (1–365, per defecte nul) afegeix avís anticipat amb
+prepagament actiu i estimació fresca; el llindar de crèdits té prioritat.
+Incidents conserven la base del saldo i reconeixen canvis de règim.
+Ajust implementat i provat localment, encara no publicat ni desplegat.
 
 `Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
 atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:
@@ -268,7 +294,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-75 proves de càlculs, accés, configuració, avisos, peticions, presentació i worker; comprovació de tipus, aïllament
+88 proves de càlculs, accés, configuració, avisos, previsió, peticions, presentació i worker; comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques, inclosa l'arrencada amb sessió bloquejada. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

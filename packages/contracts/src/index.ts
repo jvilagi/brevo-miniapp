@@ -13,6 +13,20 @@ export type Quota =
   | { regime: 'subscription'; available: number; dailyLimit: null; prepaidAvailable: number | null }
   | { regime: 'unknown'; available: null; dailyLimit: null };
 
+// Selecció de saldo per a presentació i avisos; mai modifica els imports del proveïdor.
+export function activeBalance(quota: Quota | null, declaredPlan: PlanReference['kind'] = 'auto') {
+  const freePrepaid = declaredPlan === 'free' && (quota?.regime === 'prepaid' || quota?.regime === 'subscription');
+  if (freePrepaid || quota?.regime === 'prepaid') return {
+    kind: 'prepaid' as const, available: quota?.regime === 'subscription' ? quota.prepaidAvailable : quota?.available ?? null, freePrepaid,
+  };
+  return { kind: quota?.regime ?? 'unknown', available: quota?.available ?? null, freePrepaid: false };
+}
+export interface PrepaidForecast {
+  status: 'estimated' | 'collecting' | 'no-consumption' | 'out-of-range' | 'exhausted' | 'unavailable' | 'not-applicable';
+  estimatedAt: string | null; averagePerDay: number | null; observationDays: number;
+  updatedAt: string | null;
+}
+
 export const smtpMetrics = [
   'requests', 'delivered', 'opens', 'uniqueOpens', 'clicks', 'uniqueClicks',
   'hardBounces', 'softBounces', 'blocked', 'spamReports', 'invalid', 'unsubscribed',
@@ -45,6 +59,7 @@ export interface AccountSnapshot {
   reference?: PlanReference;
   source: 'brevo';
   quota: DataSection<Quota>;
+  prepaidForecast?: PrepaidForecast;
   smtp: {
     source: 'smtp';
     period: ReportPeriod;
@@ -71,7 +86,7 @@ export interface Appearance { icon: typeof accountIcons[number]; color: typeof a
 export interface PlanReference { kind: 'auto' | 'free' | 'prepaid' | 'subscription'; allowance: number | null; renewalDay: number | null }
 export interface ManagedAccount {
   id: string; name: string; appearance: Appearance; reference: PlanReference;
-  connected: boolean; lowBalance: number | null; lowPercent: number | null;
+  connected: boolean; lowBalance: number | null; lowPercent: number | null; lowDays?: number | null;
 }
 export interface EmailAlerts {
   enabled: boolean; recipient: string; senderAccountId: string; senderId: number | null;

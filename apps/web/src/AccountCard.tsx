@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { smtpMetrics, type AccountSnapshot, type DataSection } from '@brevo-miniapp/contracts';
+import { activeBalance, smtpMetrics, type AccountSnapshot, type DataSection } from '@brevo-miniapp/contracts';
 import { Chart } from './Chart';
 import { Icon } from './icons';
-import { dateLabel, metricLabels, number, quotaPresentation, sectionStatus, updatedLabel, zoneLabel } from './presentation';
+import { dateLabel, forecastLabel, metricLabels, number, quotaPresentation, sectionStatus, updatedLabel, zoneLabel } from './presentation';
 
 function Provenance({ section, timezone, locallyStale }: { section: DataSection<unknown>; timezone: string; locallyStale: boolean }) {
   const status = sectionStatus(section, locallyStale);
@@ -16,25 +16,23 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
   const [period, setPeriod] = useState<'today' | 'week'>('today');
   const { quota, smtp, marketing } = account;
   const info = quotaPresentation(quota.data, account.reference?.kind);
-  const subscription = quota.data?.regime === 'subscription' ? quota.data : null;
+  const balance = activeBalance(quota.data, account.reference?.kind);
+  const forecastFresh = !locallyStale && quota.status === 'fresh' && (!account.prepaidForecast || account.prepaidForecast.updatedAt === quota.updatedAt);
   const timezone = smtp.period.timezone;
   const selected = period === 'today' ? smtp.today.report : smtp.totals;
   const detailsId = `account-${account.id}-details`;
   const dailyStatus = sectionStatus(smtp.daily, locallyStale);
   return <article className={`account-card account-${account.id} color-${account.appearance?.color ?? (account.id === '2' ? 'purple' : 'green')}`} aria-labelledby={`account-${account.id}-name`}>
+    <div className="account-overview">
     <div className="account-heading">
       <div className="account-title"><span className="account-icon"><Icon name={account.appearance?.icon ?? 'mail'}/></span><div>
         <span className="eyebrow">COMPTE BREVO</span><h2 id={`account-${account.id}-name`}>{account.name}</h2>
       </div></div><span className={`plan-badge ${quota.data?.regime === 'unknown' || !quota.data ? 'is-unknown' : ''}`}>{info.badge}</span>
     </div>
-    <div className={`account-numbers${subscription ? ' has-subscription' : ''}`}>
+    <div className="account-numbers">
       <div className="today-number"><span className="number-label">Sol·licituds avui</span><strong>{number(smtp.today.report.data?.requests)}</strong>
         <span className="number-source">Enviament transaccional</span><Provenance section={smtp.today.report} timezone={timezone} locallyStale={locallyStale}/>
       </div>
-      {subscription && <div className="prepaid-number"><span className="number-label">Crèdits prepagament</span><strong>{number(subscription.prepaidAvailable)}</strong>
-        <span className="number-source">{subscription.prepaidAvailable === null ? 'Saldo no disponible segons Brevo' : 'Restants segons Brevo'}</span>
-        <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
-      </div>}
       <div className="balance-number"><span className="number-label">{info.title}</span><strong>{number(info.available)}</strong>
         <span className="number-source">{info.source}</span>
         <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
@@ -43,13 +41,24 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
     {info.fraction !== null && <div className="quota-track" role="meter" aria-label="Saldo Free disponible segons Brevo" aria-valuemin={0} aria-valuemax={300} aria-valuenow={info.available!}>
       <span style={{ width: `${info.fraction * 100}%` }}/>
     </div>}
+    {info.fraction === null && <div className="quota-track quota-placeholder" aria-hidden="true"/>}
     <div className="account-note">{info.note}</div>
-    {account.reference && (account.reference.kind !== 'auto' || account.reference.allowance !== null) && <p className="reference-note">Referència manual: {({ auto: 'automàtic', free: 'Free', prepaid: 'prepagament', subscription: 'subscripció' })[account.reference.kind]}
-      {account.reference.allowance !== null && ` · ${number(account.reference.allowance)} emails/crèdits contractats`}{account.reference.renewalDay && ` · renovació dia ${account.reference.renewalDay}`}. No modifica el saldo de Brevo.</p>}
+    <div className="forecast-summary"><span className="number-label">Esgotament estimat</span>
+      <strong>{forecastLabel(balance.kind, account.prepaidForecast, timezone, forecastFresh)}</strong>
+      <span className="number-source">{balance.kind === 'prepaid' ? 'Orientatiu · segons consum real de crèdits' : 'Sense data d’esgotament calculada'}</span>
+    </div></div>
     <button type="button" className="expand-button" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen(!open)}>
       <span>{open ? 'Amaga les estadístiques' : 'Estadístiques i evolució'}</span><Icon name="chevron" className={open ? 'is-open' : ''}/>
     </button>
     {open && <div id={detailsId} className="account-details">
+      {quota.data?.regime === 'subscription' && <section className="balance-details" aria-label="Imports retornats per Brevo"><h3>Imports retornats per Brevo</h3>
+        <dl className="metric-list"><div><dt>Crèdits prepagament</dt><dd>{number(quota.data.prepaidAvailable)}</dd></div>
+          <div><dt>{balance.freePrepaid ? 'Entrada de pla · no s’afegeix al prepagament' : 'Emails del pla'}</dt><dd>{number(quota.data.available)}</dd></div></dl>
+        <Provenance section={quota} timezone={timezone} locallyStale={locallyStale}/>
+        <p className="helper">Saldos independents, mai sumats. La referència Free identifica el prepagament com a saldo actiu; una entrada «subscription» a l’API no acredita per si sola una quota mensual.</p></section>}
+      {account.reference && (account.reference.kind !== 'auto' || account.reference.allowance !== null) && <p className="reference-note">Referència manual: {({ auto: 'automàtic', free: 'Free', prepaid: 'prepagament', subscription: 'subscripció' })[account.reference.kind]}
+        {account.reference.allowance !== null && ` · ${number(account.reference.allowance)} emails/crèdits contractats`}{account.reference.renewalDay && ` · renovació dia ${account.reference.renewalDay}`}. No modifica els imports de Brevo.</p>}
+      {balance.kind === 'prepaid' && <p className="helper forecast-help">La previsió necessita almenys 7 dies de lectures del saldo, no informes SMTP. Una recàrrega o una interrupció de més de 36 hores reinicia l’observació. No és caducitat ni garantia: el ritme de consum i les compres poden canviar. Els crèdits comprats no caduquen.</p>}
       <section aria-labelledby={`account-${account.id}-stats`}>
         <div className="section-heading"><h3 id={`account-${account.id}-stats`}>Activitat transaccional</h3></div>
         <div className="period-switch" role="group" aria-label={`Període d’estadístiques de ${account.name}`}>
@@ -73,7 +82,7 @@ export function AccountCard({ account, locallyStale }: { account: AccountSnapsho
         <Provenance section={marketing.campaigns} timezone={timezone} locallyStale={locallyStale}/>
         <p className="helper">És el nombre de campanyes, no d’emails. No està inclòs en les estadístiques SMTP.</p>
       </div>
-      {quota.data?.regime === 'prepaid' && <p className="helper transition-note">Quan s’esgotin els crèdits, es tornarà a comprovar el pla. La quota Free de 300/dia només es mostrarà quan Brevo confirmi el règim.</p>}
+      {balance.kind === 'prepaid' && <p className="helper transition-note">Quan s’esgotin els crèdits, es tornarà a comprovar el pla. La quota Free de 300/dia només es mostrarà quan Brevo confirmi el règim.</p>}
     </div>}
   </article>;
 }

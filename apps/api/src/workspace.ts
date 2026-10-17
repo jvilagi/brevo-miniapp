@@ -8,7 +8,7 @@ export class SettingsFailure extends Error {
   constructor(public status: number) { super('Configuració no disponible.'); }
 }
 export type PrivateAccount = Omit<ManagedAccount, 'connected'> & { apiKey: string | null };
-export interface IncidentState { firstProblem: number | null; lastAttempt: number | null; active: boolean }
+export interface IncidentState { firstProblem: number | null; lastAttempt: number | null; active: boolean; basis?: 'free' | 'prepaid' | 'subscription' | 'unknown' }
 export interface WorkspaceData {
   version: 1; revision: number; accounts: PrivateAccount[]; alerts: EmailAlerts;
   deliveries: AlertDelivery[]; incidents: Record<string, IncidentState>;
@@ -46,7 +46,7 @@ function nullableCount(value: unknown, max = 1_000_000_000): number | null {
 }
 export const validId = (value: string) => /^[a-zA-Z0-9-]{1,64}$/.test(value);
 export function accountInput(value: unknown): Omit<ManagedAccount, 'id' | 'connected'> {
-  const item = record(value); exact(item, ['name', 'appearance', 'reference', 'lowBalance', 'lowPercent']);
+  const item = record(value); exact(item, ['name', 'appearance', 'reference', 'lowBalance', 'lowPercent', 'lowDays']);
   const appearance = record(item.appearance), reference = record(item.reference);
   exact(appearance, ['icon', 'color']); exact(reference, ['kind', 'allowance', 'renewalDay']);
   if (!accountIcons.includes(appearance.icon as Appearance['icon']) || !accountColors.includes(appearance.color as Appearance['color']) ||
@@ -55,9 +55,11 @@ export function accountInput(value: unknown): Omit<ManagedAccount, 'id' | 'conne
   if (renewalDay === 0) return invalid();
   const allowance = nullableCount(reference.allowance), lowPercent = nullableCount(item.lowPercent, 100);
   if (lowPercent !== null && (allowance === null || allowance === 0)) return invalid();
+  const lowDays = item.lowDays === undefined ? null : nullableCount(item.lowDays, 365);
+  if (lowDays === 0) return invalid();
   return { name: text(item.name, 100), appearance: appearance as unknown as Appearance,
     reference: { kind: reference.kind as PlanReference['kind'], allowance, renewalDay },
-    lowBalance: nullableCount(item.lowBalance), lowPercent };
+    lowBalance: nullableCount(item.lowBalance), lowPercent, lowDays };
 }
 export function alertInput(value: unknown): EmailAlerts {
   const item = record(value); exact(item, ['enabled', 'recipient', 'senderAccountId', 'senderId', 'connectionErrors', 'repeatMinutes']);
@@ -72,7 +74,7 @@ export function alertInput(value: unknown): EmailAlerts {
 }
 export function defaultAccount(account: AccountConfig, index: number): PrivateAccount {
   return { ...account, appearance: { icon: 'mail', color: index % 2 ? 'purple' : 'green' },
-    reference: { kind: 'auto', allowance: null, renewalDay: null }, lowBalance: null, lowPercent: null };
+    reference: { kind: 'auto', allowance: null, renewalDay: null }, lowBalance: null, lowPercent: null, lowDays: null };
 }
 function validateData(value: unknown): WorkspaceData {
   const data = record(value); exact(data, ['version', 'revision', 'accounts', 'alerts', 'deliveries', 'incidents', 'push', 'emailBudget']);
@@ -80,7 +82,7 @@ function validateData(value: unknown): WorkspaceData {
     !Array.isArray(data.accounts) || data.accounts.length > 25 || !Array.isArray(data.deliveries) || data.deliveries.length > 100) return invalid();
   const ids = new Set<string>();
   const accounts = data.accounts.map(raw => {
-    const item = record(raw); exact(item, ['id', 'apiKey', 'name', 'appearance', 'reference', 'lowBalance', 'lowPercent']);
+    const item = record(raw); exact(item, ['id', 'apiKey', 'name', 'appearance', 'reference', 'lowBalance', 'lowPercent', 'lowDays']);
     if (typeof item.id !== 'string' || !validId(item.id) || ids.has(item.id) ||
       !(item.apiKey === null || typeof item.apiKey === 'string' && item.apiKey.length >= 16 && item.apiKey.length <= 512 && !/\s/.test(item.apiKey))) return invalid();
     ids.add(item.id);
@@ -98,11 +100,11 @@ function validateData(value: unknown): WorkspaceData {
       !['email', 'push'].includes(String(delivery.channel)) || !['pending', 'accepted', 'rejected', 'uncertain'].includes(String(delivery.status))) return invalid();
   }
   const incidents = record(data.incidents);
-  if (Object.keys(incidents).length > 50) return invalid();
+  if (Object.keys(incidents).length > 75) return invalid();
   for (const [key, raw] of Object.entries(incidents)) {
-    if (!/^[a-zA-Z0-9-]{1,64}:(balance|connection)$/.test(key)) return invalid();
-    const state = record(raw); exact(state, ['firstProblem', 'lastAttempt', 'active']);
-    if (typeof state.active !== 'boolean') return invalid();
+    if (!/^[a-zA-Z0-9-]{1,64}:(balance|connection|forecast)$/.test(key)) return invalid();
+    const state = record(raw); exact(state, ['firstProblem', 'lastAttempt', 'active', 'basis']);
+    if (typeof state.active !== 'boolean' || state.basis !== undefined && !['free', 'prepaid', 'subscription', 'unknown'].includes(String(state.basis))) return invalid();
     nullableCount(state.firstProblem, Number.MAX_SAFE_INTEGER); nullableCount(state.lastAttempt, Number.MAX_SAFE_INTEGER);
   }
   const push = record(data.push); exact(push, ['enabled', 'keys', 'devices']);
@@ -181,13 +183,13 @@ export class Workspace {
       const account = draft.accounts.find(a => a.id === id); if (!account) throw new SettingsFailure(404);
       if (credential && draft.accounts.some(a => a.id !== id && a.apiKey === credential)) throw new SettingsFailure(400);
       if (credential) await validate(); Object.assign(account, accountInput(metadata));
-      if (credential) { account.apiKey = credential; delete draft.incidents[id + ':connection']; delete draft.incidents[id + ':balance']; }
+      if (credential) { account.apiKey = credential; delete draft.incidents[id + ':connection']; delete draft.incidents[id + ':balance']; delete draft.incidents[id + ':forecast']; }
     });
   }
   async remove(revision: number, id: string) { return this.edit(revision, draft => {
     const index = draft.accounts.findIndex(a => a.id === id); if (index < 0) throw new SettingsFailure(404);
     draft.accounts.splice(index, 1);
     if (draft.alerts.senderAccountId === id) { draft.alerts.enabled = false; draft.alerts.senderAccountId = ''; draft.alerts.senderId = null; }
-    delete draft.incidents[id + ':connection']; delete draft.incidents[id + ':balance'];
+    delete draft.incidents[id + ':connection']; delete draft.incidents[id + ':balance']; delete draft.incidents[id + ':forecast'];
   }); }
 }

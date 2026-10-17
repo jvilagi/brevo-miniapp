@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chartPoints, elapsedLabel, number, quotaPresentation, sectionStatus, updatedLabel } from '../src/presentation';
+import { chartPoints, elapsedLabel, forecastLabel, number, quotaPresentation, sectionStatus, updatedLabel } from '../src/presentation';
 
 test('valors desconeguts, zero i format català', () => {
   assert.equal(number(null), '—'); assert.equal(number(undefined), '—'); assert.equal(number(0), '0'); assert.equal(number(8400), '8.400');
@@ -30,22 +30,27 @@ test('saldo Free independent del dia SMTP i sense hora de reinici no verificada'
   assert(!JSON.stringify(free).match(/00:00|GMT|Disponibles avui/));
   assert.equal(quotaPresentation({ regime: 'free', available: 300, dailyLimit: 300 }).available, 300);
 });
-test('saldos del pla i prepagament separats, sense imposar ordre de consum', () => {
+test('mateix resum de saldo: Free amb prepagament destaca crèdits, pla no altera imports', () => {
   const monthly = quotaPresentation({ regime: 'subscription', available: 1200, dailyLimit: null, prepaidAvailable: 400 });
   assert.equal(monthly.available, 1200); assert.equal(monthly.fraction, null);
-  assert.equal(monthly.title, 'Emails del pla'); assert.equal(monthly.badge, 'Pla + prepagament');
-  assert.match(monthly.note, /saldos es mostren separats/); assert.match(monthly.note, /Brevo determina quin saldo es consumeix/);
-  assert(!/primer|després|reserva|mensual/.test(monthly.note)); assert.notEqual(monthly.available, 1600);
-  assert.match(monthly.note, /En Free, el prepagament substitueix els 300/);
+  assert.equal(monthly.title, 'Saldo disponible'); assert.equal(monthly.badge, 'Pla + prepagament');
+  assert.match(monthly.note, /indica-ho a Configuració/); assert.notEqual(monthly.available, 1600);
   const declaredFree = quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: 400 }, 'free');
-  assert.equal(declaredFree.available, 285); assert.equal(declaredFree.fraction, null);
-  assert.match(declaredFree.note, /Pla declarat Free/); assert.match(declaredFree.note, /No són dos saldos disponibles alhora/);
-  assert.match(declaredFree.source, /no s’afegeix al prepagament/);
-  assert.equal(quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: 0 }, 'free').available, 285);
-  assert.match(quotaPresentation({ regime: 'prepaid', available: 0, dailyLimit: null }, 'free').note, /zero no l’activa automàticament/);
+  assert.equal(declaredFree.available, 400); assert.equal(declaredFree.fraction, null);
+  assert.equal(declaredFree.badge, 'Free · prepagament'); assert.match(declaredFree.note, /substitueix la quota Free/);
+  assert.equal(quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: 0 }, 'free').available, 0);
+  assert.equal(quotaPresentation({ regime: 'subscription', available: 285, dailyLimit: null, prepaidAvailable: null }, 'free').available, null);
   assert.equal(quotaPresentation({ regime: 'unknown', available: null, dailyLimit: null }, 'free').available, null);
   const unknownReserve = quotaPresentation({ regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: null });
-  assert.equal(unknownReserve.available, 0); assert.match(unknownReserve.note, /no se suposa que sigui zero/);
+  assert.equal(unknownReserve.available, 0);
+});
+test('previsió: data orientativa només per prepagament fresc, absència i zero explícits', () => {
+  const forecast = { status: 'estimated' as const, estimatedAt: '2026-10-23T12:00:00Z', averagePerDay: 100, observationDays: 7, updatedAt: '2026-10-17T12:00:00Z' };
+  assert.match(forecastLabel('prepaid', forecast, 'Etc/GMT-2', true), /23/);
+  assert.equal(forecastLabel('prepaid', forecast, 'Etc/GMT-2', false), 'No disponible');
+  assert.equal(forecastLabel('free', forecast, 'Etc/GMT-2', true), 'No aplicable · quota diària');
+  assert.equal(forecastLabel('prepaid', undefined, 'Etc/GMT-2', true), 'Recollint historial · mínim 7 dies');
+  assert.equal(forecastLabel('prepaid', { ...forecast, status: 'exhausted', estimatedAt: null }, 'Etc/GMT-2', true), 'Crèdits esgotats');
 });
 test('gràfic: buits explícits, zeros reals i escala compartida', () => {
   const points = chartPoints([0, null, 20]);

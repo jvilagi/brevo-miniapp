@@ -171,11 +171,21 @@ llindars de saldo absolut o percentatge del volum configurat; el percentatge
 requereix un volum positiu. El saldo sempre prové de Brevo: mai `300 - enviats`.
 El saldo del pla i el prepagament es presenten separadament, no sumats.
 Si tens Free amb crèdits comprats, selecciona **Free** com a referència:
-l'explicació indicarà que el prepagament substitueix els 300 emails/dia,
-no que estan disponibles alhora. Això no altera els imports retornats
+targeta i avisos utilitzaran els crèdits prepagament, no els 300 emails/dia
+com a saldo actiu simultani. El percentatge del volum Free no genera
+avisos del prepagament; configura el llindar absolut en crèdits.
+Això no altera els imports retornats
 ni activa la quota Free quan el prepagament arriba a zero; cal que Brevo
 confirmi el règim. No triïs «Subscripció mensual» només perquè l'API
 retorni una entrada anomenada `subscription`.
+
+Opcionalment, configura **previsió d'esgotament en ≤ dies** (1–365).
+Per defecte queda buida i no genera avisos nous. Necessita prepagament
+actiu i una estimació fresca amb almenys set dies d'historial de saldo;
+el llindar de crèdits té prioritat. No garanteix una data: noves compres
+i canvis de ritme poden alterar-la. No s'infereix a partir dels informes SMTP.
+Sense avisos actius només s'acumulen mostres quan es consulten comptes;
+si passa més de 36 hores entre lectures es comença una sèrie nova.
 
 La configuració, les claus i les subscripcions push es desen xifrades amb
 AES-256-GCM a `access/workspace.sealed.json` (`0600`, directori `0700`),
@@ -191,6 +201,11 @@ el xifrat; rotar el secret de sessió exigeix una migració administrativa
 abans de reiniciar, o no es podrà llegir la configuració. No hi ha una
 comanda de migració distribuïda. No eliminis el fitxer per «arreglar» un
 error: un fitxer invàlid impedeix arrencar i no restaura el bootstrap.
+
+L'històric de crèdits és un segon fitxer privat xifrat,
+`access/prepaid-history.sealed.json`, al costat del workspace. Inclou-lo
+als backups amb el secret original. Si l'històric falla, no es bloqueja
+l'accés: la previsió queda no disponible i no se sobreescriu el fitxer.
 
 El comptador d'Actualitza indica el temps des de la consulta correcta,
 no l'edat de cada dada de Brevo. Les dates i avisos de cada secció

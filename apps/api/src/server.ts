@@ -3,13 +3,15 @@ import { readConfig } from './config.js';
 import { loadPrivateConfig } from './private-config.js';
 import { AccountsService, BrevoClient } from './brevo.js';
 import { Workspace } from './workspace.js';
+import { PrepaidHistory } from './prepaid-history.js';
 
 try {
   const config = readConfig();
   const privateConfig = await loadPrivateConfig();
   const workspace = privateConfig.auth ? await Workspace.open(privateConfig) : undefined;
   const client = new BrevoClient();
-  const service = new AccountsService(workspace ? () => workspace.accounts() : privateConfig.accounts, privateConfig.timezone, client);
+  const history = workspace ? await PrepaidHistory.open(privateConfig) : undefined;
+  const service = new AccountsService(workspace ? () => workspace.accounts() : privateConfig.accounts, privateConfig.timezone, client, Date.now, history);
   const app = await buildApp({ serveWeb: config.production, privateConfig,
     accountsService: service, ...(workspace ? { workspace, brevoClient: client, quotaReader: () => service.quotas() } : {}) });
   const address = await app.listen({ host: config.host, port: config.port });

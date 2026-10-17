@@ -23,6 +23,7 @@ Exemple de disposició, fora del checkout de les versions:
       password.json  0600, hash actual després d'un canvi des de l'app
       account-names.json  0600, noms propis després de desar-los des de l'app
       workspace.sealed.json  0600, comptes i avisos xifrats de la configuració nova
+      prepaid-history.sealed.json  0600, mostres privades xifrades per a la previsió
   caddy/site.conf
 ```
 
@@ -161,6 +162,14 @@ ignoraria el fitxer xifrat, tornaria als dos comptes inicials i no tindria
 els avisos. No despleguis un rollback d'aquest tipus sense revisar abans
 quines credencials i metadades carregaria. Preserva el fitxer xifrat i el
 secret original; no esborres configuració per intentar tornar enrere.
+
+L'ajust de saldo actiu i previsió afegeix `lowDays` i la base de l'incident
+al workspace en el pròxim desament. Les versions anteriors amb validació
+estricta poden no llegir aquests camps. Abans de tornar-hi, prepara una
+migració privada o restaura una còpia revisada, preservant canvis posteriors.
+No sobreescriguis configuració recent amb un backup sense revisar-la.
+Inclou `prepaid-history.sealed.json` al backup i conserva el secret estable;
+el muntatge existent d'accés ja cobreix aquest fitxer, sense nous ports.
 
 Per rotar claus després de crear el magatzem xifrat, utilitza **Configuració**
 amb la contrasenya actual: el backend valida i desa la nova clau. Comprova

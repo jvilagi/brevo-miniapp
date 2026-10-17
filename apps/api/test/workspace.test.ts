@@ -157,7 +157,66 @@ test('avisos: subscripció esgotada explicita els crèdits de reserva, sense sum
   await new AlertMonitor(workspace, async () => [{ id: '1', quota: { status: 'fresh', updatedAt: new Date().toISOString(), error: null,
     data: { regime: 'subscription', available: 0, dailyLimit: null, prepaidAvailable: 4800 } } }],
   { async send(_key, _sender, _recipient, _subject, text) { message = text; } }).tick();
-  assert.match(message, /prepagament segons Brevo 4800; emails del pla 0/);
+  assert.match(message, /emails del pla 0; crèdits prepagament segons Brevo 4800/);
+});
+test('avisos: Free amb prepagament vigila crèdits, no la quota ni el percentatge Free', async t => {
+  const { workspace } = await configured(t); let calls = 0, message = '', credits: number | null = 1200;
+  await workspace.edit(null, draft => {
+    draft.accounts[0]!.reference = { kind: 'free', allowance: 300, renewalDay: null };
+    draft.accounts[0]!.lowPercent = 100;
+  });
+  const service = new AlertMonitor(workspace, async () => [{ id: '1', quota: { ...quota(0).quota,
+    data: { regime: 'subscription', available: 0, prepaidAvailable: credits, dailyLimit: null } } }],
+  { async send(_key, _sender, _recipient, _subject, text) { calls++; message = text; } });
+  await service.tick(); assert.equal(calls, 0, 'Pla esgotat però prepagament suficient');
+  credits = 250; await service.tick(); assert.equal(calls, 0, 'No usa percentatge del volum Free de 300');
+  credits = 10; await service.tick(); assert.equal(calls, 1);
+  assert.match(message, /crèdits prepagament restants 10/); assert(!/emails del pla 0/.test(message));
+  await service.tick(); assert.equal(calls, 1);
+});
+test('avisos: prepagament absent és desconegut, zero no activa Free', async t => {
+  const { workspace } = await configured(t); let credits: number | null = null, now = Date.now(), messages: string[] = [];
+  await workspace.edit(null, draft => { draft.accounts[0]!.reference.kind = 'free'; });
+  const service = new AlertMonitor(workspace, async () => [{ id: '1', quota: { ...quota(300).quota,
+    data: { regime: 'subscription', available: 300, prepaidAvailable: credits, dailyLimit: null } } }],
+  { async send(_key, _sender, _recipient, _subject, text) { messages.push(text); } }, () => now);
+  await service.tick(); assert.equal(messages.length, 0);
+  now += 900000; await service.tick(); assert.match(messages[0]!, /no s’obté un saldo fresc/);
+  credits = 0; now += 300000; await service.tick(); assert.match(messages[1]!, /crèdits prepagament restants 0/);
+  assert.equal(messages.length, 2); assert(!messages[1]!.includes('saldo segons Brevo 300'));
+});
+test('avisos: previsió opcional, fresca i deduplicada; el llindar de crèdits té prioritat', async t => {
+  const { workspace } = await configured(t); const now = Date.now(); let calls = 0, text = '', credits = 500, staleForecast = true;
+  await workspace.edit(null, draft => { draft.accounts[0]!.reference.kind = 'free'; });
+  const service = new AlertMonitor(workspace, async () => [{ id: '1', quota: { ...quota(300).quota, updatedAt: new Date(now).toISOString(),
+    data: { regime: 'subscription', available: 300, prepaidAvailable: credits, dailyLimit: null } },
+    prepaidForecast: { status: 'estimated', estimatedAt: new Date(now + 3 * 86400000).toISOString(), averagePerDay: 100,
+      observationDays: 7, updatedAt: new Date(now - (staleForecast ? 60000 : 0)).toISOString() } }],
+  { async send(_key, _sender, _recipient, _subject, message) { calls++; text = message; } }, () => now);
+  await service.tick(); assert.equal(calls, 0, 'Previsió desactivada per defecte');
+  await workspace.edit(null, draft => { draft.accounts[0]!.lowDays = 7; });
+  await service.tick(); assert.equal(calls, 0, 'Previsió d’una altra lectura ignorada'); staleForecast = false;
+  await service.tick(); assert.equal(calls, 1); assert.match(text, /Previsió orientativa d’esgotament/);
+  await service.tick(); assert.equal(calls, 1);
+  credits = 10; await service.tick(); assert.equal(calls, 2); assert.match(text, /restants 10/);
+});
+test('avisos: canvi de saldo actiu no conserva la supressió d’un incident del pla', async t => {
+  const { workspace } = await configured(t); const now = Date.now(); let calls = 0;
+  await workspace.edit(null, draft => {
+    draft.accounts[0]!.reference.kind = 'free';
+    draft.incidents['1:balance'] = { active: true, firstProblem: now, lastAttempt: now, basis: 'subscription' };
+  });
+  await new AlertMonitor(workspace, async () => [{ id: '1', quota: { ...quota(300).quota,
+    data: { regime: 'subscription', available: 300, prepaidAvailable: 10, dailyLimit: null } } }],
+  { async send() { calls++; } }, () => now).tick();
+  assert.equal(calls, 1);
+});
+test('workspace: llindar de dies validat, persistent i compatible amb comptes anteriors', async t => {
+  const { workspace, config } = await setup(t);
+  assert.equal(workspace.settings().accounts[0]!.lowDays, null);
+  for (const lowDays of [0, -1, 366, 1.5, '7']) assert.throws(() => accountInput({ ...metadata, lowDays }));
+  await workspace.update(0, '1', { ...metadata, lowDays: 7 }, null, async () => {});
+  assert.equal((await Workspace.open(config)).settings().accounts[0]!.lowDays, 7);
 });
 test('avisos: errors d’enviament i timeouts no es reintenten immediatament', async t => {
   const { workspace } = await configured(t); let calls = 0;

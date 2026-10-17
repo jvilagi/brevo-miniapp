@@ -65,16 +65,17 @@ han de viure fora del codi i de la imatge Docker.
   El pla i el volum contractat manuals són una referència per als avisos,
   no substitueixen el saldo retornat per Brevo ni compren crèdits.
   Si el compte és Free amb crèdits comprats, tria «Free» al pla de
-  referència: l'explicació indicarà que el prepagament substitueix la
-  quota diària, sense canviar cap import ni activar-la automàticament.
+  referència: targeta i avisos utilitzaran el saldo prepagament en lloc
+  de la quota diària, sense modificar cap import ni activar Free per un zero.
   Configuració privada xifrada al servidor, compartida entre dispositius.
   Al costat d'«Actualitza», un comptador mostra el temps des de l'última
   consulta correcta; no és l'edat de cada dada ni afegeix polling.
 - Quota, saldo i consum separats. El saldo es llegeix de l'API: no es
   calcula com `300 - enviats` ni se sumen crèdits prepagament i quota Free.
-  Quan Brevo retorna saldo del pla i prepagament, es mostren separats,
-  amb el prepagament primer a la vista. Aquesta disposició no imposa
-  una regla universal de facturació ni modifica els saldos retornats.
+  Targetes plegades uniformes, amb consum d'avui, saldo actiu i previsió.
+  Els altres imports retornats es conserven al desplegable, mai sumats.
+  En Free amb prepagament, la quota Free no es presenta com a saldo actiu
+  ni genera avisos de percentatge del volum Free.
   L'hora exacta de reinici Free no està verificada; la pantalla no la
   promet ni assumeix que el saldo i les estadístiques canvien alhora.
 - SMTP i campanyes de màrqueting són fonts separades. Els totals únics
@@ -87,6 +88,11 @@ han de viure fora del codi i de la imatge Docker.
   Tries destinatari, compte Brevo que paga els correus i remitent actiu.
   Les push no consumeixen crèdits Brevo. Requereixen permís del dispositiu;
   a l'iPhone, app afegida a la pantalla d'inici (iOS 16.4 o posterior).
+- Previsió orientativa d'esgotament del prepagament: almenys set dies de
+  lectures reals del saldo, no una suma d'enviaments SMTP. Historial privat
+  xifrat al servidor; abans de tenir prou dades es mostra «Recollint historial».
+  Llindar opcional d'avís en dies, desactivat per defecte. No és caducitat
+  dels crèdits ni garantia; recàrregues i interrupcions reinicien l'observació.
 - Un únic fus horari per a tots els comptes. El valor inicial `Etc/GMT-2`
   és GMT+2 fix; verifica el fus de Brevo abans de canviar-lo.
 - Una contrasenya compartida per instal·lació, no un servei multiusuari.
@@ -99,7 +105,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 75 proves (60 API + 15 peticions/presentació/worker), compilació i separació
+Comprova tipus, 88 proves (72 API + 16 peticions/presentació/worker), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

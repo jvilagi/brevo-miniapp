@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-75 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+88 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -440,3 +440,46 @@ anterior exacta: amb el worker antic i l'HTML antic encara en cache,
 s'accepta explícitament el worker nou, sense esborrar emmagatzematge.
 Resultat al Safari/PWA de l'iPhone real pendent
 de confirmació de l'usuari; no cal esborrar dades ni rotar secrets.
+
+## Targetes uniformes, saldo actiu i previsió de crèdits
+
+2026-10-17: ajust aprovat amb GPT-6.1 Sol / High. Indicacions: mateixa mida
+i estructura, Free amb prepagament sense avís basat en la quota diària,
+vigilància dels crèdits i possible data d'esgotament.
+
+Nou GET real dels dos comptes, sense payloads complets, claus o dades
+personals als logs. Un compte retorna prepagament i entrada `subscription`
+simultània; l'altre Free. El responsable confirma que el primer és Free
+amb crèdits comprats. Documentació oficial revisada: Free substituït pel
+prepagament, no suma; els crèdits comprats no caduquen. La data d'esgotament
+serà estimada, no una data de caducitat de Brevo.
+
+Implementat localment: selector compartit de saldo actiu amb referència
+Free explícita; saldo normalitzat intacte i altres imports als detalls.
+Targetes plegades de mateixa mida i blocs comuns, desplegables independents.
+Avisos de crèdits en lloc del saldo del pla per Free amb prepagament;
+percentatge del volum Free ignorat. Reserva absent desconeguda, zero sense
+activar Free. Canvis de saldo actiu no hereten la supressió d'un altre saldo.
+
+Historial de saldo xifrat, separat de la configuració, amb credencials
+segregades per empremta i escriptures serialitzades. Mostres de les lectures
+existents; cap GET extra, monitor nou ni suma d'enviaments SMTP. Almenys
+7 dies i 8 dates observades, descens net positiu i horitzó màxim 365 dies.
+Recàrrega o buit de més de 36 hores reinicia observació. Error del fitxer
+no bloqueja sessió ni comptes. `lowDays` opcional, desactivat per defecte,
+per avisar de previsió propera; el llindar de crèdits té prioritat.
+
+88 proves (72 API + 16 web), tipus, compilació i límits de secrets
+superats localment. Chrome UI/PWA verificats amb dades sintètiques:
+igualtat de mides a 320–1280 px, saldo actiu, zero, absència, antiguitat,
+previsió, configuració, sessions, offline i actualització controlada.
+Captures mòbil i escriptori revisades. Safari/iPhone real pendent.
+
+Encara no publicat ni desplegat: producció continua a la versió anterior.
+Cal identificar explícitament com a Free el compte confirmat pel responsable
+quan s'apliqui la configuració; no es dedueix del nom, id ni saldo 300.
+En aquesta tasca només s'han llegit dades reals. Cap canvi de configuració
+privada, claus o contrasenya, cap avís real ni activació dels canals.
+El responsable confirma que es refereix als avisos de la MiniApp, no a
+correus del proveïdor Brevo. L'ajust afecta només les regles de la MiniApp;
+no cal modificar preferències ni avisos del compte a Brevo.

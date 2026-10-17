@@ -15,6 +15,7 @@ secrets
 **/password.json
 **/account-names.json
 **/workspace.sealed.json
+**/prepaid-history.sealed.json
 **/access
 **/.password-*.tmp
 **/.private-*.tmp

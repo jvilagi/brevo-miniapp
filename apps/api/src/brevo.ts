@@ -4,6 +4,7 @@ import { DataCache } from './cache.js';
 import { normalizeQuota, normalizeSmtpMetrics, sevenDayPeriod } from './normalize.js';
 import type { AccountConfig } from './private-config.js';
 import { createHash } from 'node:crypto';
+import type { PrepaidHistory } from './prepaid-history.js';
 
 type JsonObject = Record<string, unknown>;
 function object(value: unknown): JsonObject {
@@ -102,7 +103,7 @@ function midnight(date: string, timezone: string): Date {
 export class AccountsService {
   private cache: DataCache;
   constructor(private accounts: AccountConfig[] | (() => AccountConfig[]), private timezone: string, private client: BrevoReader = new BrevoClient(),
-    private now: () => number = Date.now) { this.cache = new DataCache(now); }
+    private now: () => number = Date.now, private history?: PrepaidHistory) { this.cache = new DataCache(now); }
   async snapshot(): Promise<AccountsResponse> {
     const now = new Date(this.now());
     const period = sevenDayPeriod(now, this.timezone);
@@ -112,14 +113,22 @@ export class AccountsService {
   async quotas() {
     const accounts = typeof this.accounts === 'function' ? this.accounts() : this.accounts;
     const today = sevenDayPeriod(new Date(this.now()), this.timezone).endDate;
-    return Promise.all(accounts.map(async account => ({ id: account.id, quota: await this.quota(account, today) })));
+    return Promise.all(accounts.map(async account => {
+      const quota = await this.quota(account, today);
+      return { id: account.id, quota, ...(this.history ? { prepaidForecast: this.history.forecast(this.namespace(account), quota) } : {}) };
+    }));
   }
   private namespace(account: AccountConfig) { return `${account.id}:${createHash('sha256').update(account.apiKey ?? '').digest('hex').slice(0, 16)}`; }
-  private quota(account: AccountConfig, day: string) {
-    return this.cache.get(`${this.namespace(account)}:${day}:quota`, async () => {
+  private async quota(account: AccountConfig, day: string) {
+    const quota = await this.cache.get(`${this.namespace(account)}:${day}:quota`, async () => {
       if (!account.apiKey) throw new Error('No disponible.');
       return normalizeQuota(object(await this.client.get(account.apiKey, '/v3/account')));
     });
+    const accounts = typeof this.accounts === 'function' ? this.accounts() : this.accounts;
+    // Una clau substituïda durant la lectura no pot tornar a entrar a l'històric.
+    const keys = accounts.map(account => this.namespace(account));
+    if (keys.includes(this.namespace(account))) await this.history?.record(this.namespace(account), quota, keys);
+    return quota;
   }
   private async account(account: AccountConfig, period: ReportPeriod, now: Date): Promise<AccountSnapshot> {
     const today = { ...period, startDate: period.endDate };
@@ -148,6 +157,7 @@ export class AccountsService {
     let daily: DataSection<DailyReport> = rawDaily;
     if (rawDaily.data && totals.status === 'fresh' && totals.data) daily = { ...rawDaily, data: reconcileDaily(rawDaily.data, totals.data) };
     return { id: account.id, name: account.name, source: 'brevo', quota,
+      ...(this.history ? { prepaidForecast: this.history.forecast(this.namespace(account), quota) } : {}),
       smtp: { source: 'smtp', period, today: { period: today, report: todayMetrics }, totals, daily },
       marketing: { source: 'marketing', period, campaigns },
     };

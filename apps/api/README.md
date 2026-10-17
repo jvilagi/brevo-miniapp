@@ -108,6 +108,16 @@ per ruta/IP/minut; prova: 2/15 minuts. Reautenticació comparteix límits global
 i concurrència scrypt del login. Desconnectar l'emissor desactiva el correu,
 mai es tria un altre compte de pagament automàticament. Les referències de
 pla són manuals i no alteren el saldo normalitzat segons API.
+La referència **Free**, si Brevo també retorna prepagament, selecciona
+els crèdits com a saldo actiu per a targeta i avisos. No suma la quota
+Free ni la recupera amb saldo zero; només una resposta efectiva Free
+de Brevo permet usar-la de nou. Reserva absent: desconegut, no zero.
+El llindar absolut s'aplica al saldo actiu. El percentatge del volum
+Free no s'aplica al prepagament; no es divideixen els crèdits per 300.
+`lowDays` opcional (1–365, `null` per defecte) avisa de previsió propera
+només amb prepagament actiu i estimació fresca; saldo baix té prioritat.
+Els incidents distingeixen el canvi de saldo perquè un avís del pla no
+suprimeixi indegudament un avís posterior de crèdits.
 
 Monitor al backend cada 5 minuts amb `ENABLE_NOTIFICATIONS=true` (per defecte
 false). Consulta només quotes, amb cache compartida. Llindars amb dada fresca,
@@ -123,6 +133,36 @@ actiu. Les push utilitzen `web-push`, VAPID i endpoints HTTPS de Google,
 Mozilla o Apple validats, sense contingut privat. TTL d'una hora; subscripcions
 404/410 retirades. Canals reals pendents de verificació amb consentiment;
 les proves injecten emissors falsos i no consumeixen crèdits.
+
+## Historial privat i previsió del prepagament
+
+`PrepaidHistory` recull el saldo prepagament de les consultes de quota
+existents, incloses les del monitor actiu. No afegeix peticions Brevo,
+polling del navegador ni un monitor independent amb els avisos apagats.
+El fitxer `prepaid-history.sealed.json`, al costat de `workspace.sealed.json`,
+utilitza AES-256-GCM, HKDF del secret estable amb context separat, IV
+aleatori i AAD pròpia. Fora del checkout, `0600`/`0700`, escriptura atòmica,
+cua de desament única i límit de 256 KiB. No incrementa la revisió de
+Configuració. No conté claus Brevo, noms ni payloads originals.
+
+Per compte/empremta de clau conserva primera i última lectura de cada
+dia UTC, màxim 60 mostres i finestra de 29 dies en registrar. Una recàrrega,
+una desaparició del saldo o un buit superior a 36 hores reinicia la sèrie;
+substituir credencials separa l'històric i retira l'anterior en la pròxima
+lectura. Cache repetida, dades antigues i rellotge enrere no creen mostres.
+
+Requereix almenys 7 dies transcorreguts i 8 dates observades. Mitjana del
+descens net del saldo per dia; projecció només amb consum positiu i
+horitzó màxim de 365 dies. Cap ús de sol·licituds SMTP ni campanyes com
+a substitut dels crèdits gastats. Compres entre lectures i canvis de ritme
+poden alterar l'estimació. Un zero fresc indica esgotat, no retorn a Free.
+`prepaidForecast` públic només conté estat, data orientativa, mitjana,
+dies observats i actualització; no la sèrie privada ni empremtes.
+
+Sense prou dades: `collecting`; sense consum: `no-consumption`; horitzó
+excessiu: `out-of-range`. Dada antiga o error de persistència: `unavailable`.
+Un històric corrupte no bloqueja login/comptes ni se sobreescriu; només
+inhabilita la previsió. Cal conservar el secret original amb els backups.
 
 ## Dades Brevo
 

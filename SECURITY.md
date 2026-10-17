@@ -52,6 +52,13 @@ privada de tots dos; canviar contrasenya no canvia el xifrat. Una rotació
 del secret exigeix migració prèvia; no hi ha eina automàtica distribuïda.
 Fitxer invàlid o xifrat amb una altra clau: arrencada tancada, sense fallback.
 
+`access/prepaid-history.sealed.json` conté només mostres de saldo i temps
+per id/empremta de credencial; no claus, noms ni respostes Brevo. Xifrat
+amb context HKDF/AAD separat i les mateixes garanties de permisos i
+escriptura atòmica. No surt al navegador ni als paquets. Una fallada només
+desactiva la previsió; no invalida l'accés ni sobreescriu l'històric corrupte.
+Un procés únic i backups privats juntament amb el secret estable.
+
 `ENABLE_NOTIFICATIONS` és opt-in i habilita correu i push. El correu és
 l'únic POST a Brevo, a un endpoint fix, només amb destinatari, remitent i
 compte configurats. Els noms i saldos dels incidents poden sortir al

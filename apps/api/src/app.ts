@@ -60,7 +60,7 @@ export async function buildApp(options: AppOptions = {}) {
   if (workspace) {
     const client = options.brevoClient ?? new BrevoClient();
     const monitor = new AlertMonitor(workspace, options.quotaReader ?? (async () => []), options.alertSender ?? new BrevoAlertSender(), Date.now,
-      options.pushSender ?? new WebPushSender(privateConfig.origin));
+      options.pushSender ?? new WebPushSender(privateConfig.origin), options.privateConfig?.timezone ?? 'UTC');
     await workspaceRoutes(app, workspace, client, monitor, { sameOrigin, requireSession, authenticated, reauthenticate });
     app.addHook('onReady', async () => { if (options.quotaReader) monitor.start(); });
     app.addHook('onClose', async () => { monitor.stop(); });

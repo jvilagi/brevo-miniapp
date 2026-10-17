@@ -30,6 +30,16 @@ peticions en ocultar la pàgina i es refresca en reprendre-la quan han
 passat 60 segons, o amb el botó Actualitza. En error es mantenen dades
 antigues identificades; una sessió `401` elimina les dades de pantalla.
 
+Targetes plegades de la mateixa mida, també apilades, amb els mateixos
+blocs: sol·licituds d'avui, saldo actiu i esgotament estimat. Els desplegables
+són independents i no s'estiren artificialment en obrir-ne un. Altres
+imports retornats, referències i explicacions llargues queden als detalls.
+En Free amb prepagament es destaquen els crèdits; la quota diària no és
+un segon saldo usable. Cal seleccionar Free a Configuració si aquest és
+el pla real: el nom `subscription` retornat no el distingeix sempre.
+La previsió ve del backend i només es mostra amb dades fresques coherents;
+mentre no hi ha historial suficient s'indica, sense inventar dates.
+
 «Canvia la contrasenya», sota les targetes autenticades, obre un formulari
 amb actual/nova/confirmació. Cancel·lar el desmunta; els camps s'esborren
 abans d'enviar-los. Èxit esborra el tauler i torna a login, perquè totes
@@ -76,7 +86,7 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-15 proves de peticions, presentació i worker incloses a `npm test`, inclosos límits de temps,
+16 proves de peticions, presentació i worker incloses a `npm test`, inclosos límits de temps,
 cancel·lació, validació de sessió, absència de reintents POST, el comptador i el saldo Free
 independent de les sol·licituds SMTP i sense hora de reinici inventada.
 La comprovació de navegador

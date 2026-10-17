@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DataSection, Quota, SenderOption } from '@brevo-miniapp/contracts';
+import { activeBalance, type DataSection, type PrepaidForecast, type Quota, type SenderOption } from '@brevo-miniapp/contracts';
 import type { BrevoReader } from './brevo.js';
 import { record, SettingsFailure, Workspace, type WorkspaceData } from './workspace.js';
 import { PushExpired, type PushSender } from './push-alerts.js';
@@ -32,12 +32,12 @@ export async function activeSenders(client: BrevoReader, apiKey: string): Promis
     return [{ id: value.id as number, email: value.email.slice(0, 254), name: value.name.slice(0, 100) }];
   });
 }
-type QuotaRow = { id: string; quota: DataSection<Quota> };
+type QuotaRow = { id: string; quota: DataSection<Quota>; prepaidForecast?: PrepaidForecast };
 export class AlertMonitor {
   private running = false;
   private timer: ReturnType<typeof setInterval> | undefined;
   constructor(private workspace: Workspace, private quotas: () => Promise<QuotaRow[]>, private sender: AlertSender,
-    private now: () => number = Date.now, private pushSender?: PushSender) {}
+    private now: () => number = Date.now, private pushSender?: PushSender, private timezone = 'UTC') {}
   start() {
     if (!this.workspace.deliveryEnabled || this.timer) return;
     this.timer = setInterval(() => { void this.tick().catch(() => {}); }, 300000); this.timer.unref();
@@ -64,7 +64,7 @@ export class AlertMonitor {
       }
       draft.deliveries = [...draft.deliveries.slice(-98), ...(email ? [{ id, at, accountId: account!.id, kind, channel: 'email' as const, status: 'pending' as const }] : []),
         ...(push.enabled ? [{ id: id + '-push', at, accountId: null, kind, channel: 'push' as const, status: 'pending' as const }] : [])];
-      for (const key of keys) draft.incidents[key] = { firstProblem: draft.incidents[key]?.firstProblem ?? null, active: true, lastAttempt: this.now() };
+      for (const key of keys) draft.incidents[key] = { ...draft.incidents[key], firstProblem: draft.incidents[key]?.firstProblem ?? null, active: true, lastAttempt: this.now() };
     });
     // La reserva durable precedeix l'enviament: en cas d'aturada o timeout no es reintenta immediatament.
     let status: 'accepted' | 'rejected' | 'uncertain' = 'accepted';
@@ -96,25 +96,35 @@ export class AlertMonitor {
       const ready: string[] = [], lines: string[] = [];
       await this.workspace.edit(before.revision, draft => {
         for (const account of draft.accounts) {
-          const quota = rows.find(row => row.id === account.id)?.quota;
-          const fresh = quota?.status === 'fresh' && quota.data !== null;
-          const available = fresh ? quota!.data!.available : null;
+          const row = rows.find(row => row.id === account.id), quota = row?.quota;
+          const balance = activeBalance(quota?.data ?? null, account.reference.kind);
+          const fresh = quota?.status === 'fresh' && balance.available !== null;
+          const available = fresh ? balance.available : null;
           const low = available !== null && (account.lowBalance !== null && available <= account.lowBalance ||
-            account.lowPercent !== null && account.reference.allowance !== null && account.reference.allowance > 0 && available / account.reference.allowance * 100 <= account.lowPercent);
-          for (const [type, active] of [['balance', low], ['connection', !fresh && draft.alerts.connectionErrors]] as const) {
-            if (type === 'balance' && !fresh) continue;
-            const key = account.id + ':' + type, previous = draft.incidents[key];
+            !balance.freePrepaid && account.lowPercent !== null && account.reference.allowance !== null && account.reference.allowance > 0 && available / account.reference.allowance * 100 <= account.lowPercent);
+          const forecast = row?.prepaidForecast;
+          const estimate = forecast?.status === 'estimated' && forecast.estimatedAt && forecast.updatedAt === quota?.updatedAt &&
+            forecast.averagePerDay !== null && forecast.averagePerDay > 0 && forecast.observationDays >= 7 ? Date.parse(forecast.estimatedAt) : NaN;
+          const soon = fresh && balance.kind === 'prepaid' && !low && account.lowDays != null && Number.isFinite(estimate) &&
+            estimate > this.now() && estimate - this.now() <= account.lowDays * 86400000;
+          for (const [type, active] of [['balance', low], ['forecast', soon], ['connection', !fresh && draft.alerts.connectionErrors]] as const) {
+            if (type !== 'connection' && !fresh) continue;
+            const key = account.id + ':' + type, stored = draft.incidents[key];
+            const previousBasis = stored?.basis ?? quota?.data?.regime ?? balance.kind;
+            const previous = type !== 'connection' && previousBasis !== balance.kind ? undefined : stored;
             const firstProblem = active ? previous?.firstProblem ?? this.now() : null;
             const lastAttempt = previous?.lastAttempt ?? null;
-            draft.incidents[key] = { active, firstProblem, lastAttempt };
+            draft.incidents[key] = { active, firstProblem, lastAttempt, ...(type !== 'connection' ? { basis: balance.kind } : {}) };
             const waited = type !== 'connection' || firstProblem !== null && this.now() - firstProblem >= 900000;
             // Un pendent incert no es duplica fins al període explícit de repetició.
             if (active && waited && (!previous?.active || lastAttempt === null || this.now() - lastAttempt >= draft.alerts.repeatMinutes * 60000)) {
               ready.push(key);
               const data = quota?.data;
-              lines.push(type === 'connection' ? `${account.name}: no s’obtenen dades fresques des de fa almenys 15 minuts.` :
-                data?.regime === 'subscription' ? `${account.name}: crèdits prepagament segons Brevo ${data.prepaidAvailable ?? 'no disponibles'}; emails del pla ${available}.` :
-                `${account.name}: saldo segons Brevo ${available}.`);
+              const projected = Number.isFinite(estimate) ? ` Previsió orientativa d’esgotament: ${new Intl.DateTimeFormat('ca-ES', { dateStyle: 'medium', timeZone: this.timezone }).format(new Date(estimate))}; depèn del ritme de consum i de noves compres.` : '';
+              lines.push(type === 'connection' ? `${account.name}: no s’obté un saldo fresc des de fa almenys 15 minuts.` :
+                balance.kind === 'prepaid' ? `${account.name}: crèdits prepagament restants ${available}.${balance.freePrepaid ? ' La quota Free no s’afegeix ni genera aquest avís.' : ''}${projected}` :
+                  data?.regime === 'subscription' ? `${account.name}: emails del pla ${available}; crèdits prepagament segons Brevo ${data.prepaidAvailable ?? 'no disponibles'}.` :
+                    `${account.name}: saldo segons Brevo ${available}.`);
             }
           }
         }
