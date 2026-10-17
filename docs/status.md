@@ -320,7 +320,7 @@ L'usuari ha de tornar a entrar i acceptar «Actualitza l'app» si la PWA
 conserva la versió anterior. Safari/iPhone real i entrega real dels canals
 continuen pendents.
 
-## Correcció de la prioritat mostrada — local
+## Correcció de la prioritat mostrada
 
 2026-10-17, tasca aprovada amb GPT-6.1 Sol / High. Nou GET dels dos
 comptes, sense claus o payloads complets als logs ni dades privades a la
@@ -331,7 +331,7 @@ aplicar a tots els comptes amb crèdits comprats.
 
 Documentació oficial revisada: pla mensual i Free amb prepagament tenen
 regles diferents; una vertical `paid` no acredita tota sola pagament
-mensual. Correcció local: prepagament primer a la targeta i al text dels
+mensual. Correcció: prepagament primer a la targeta i al text dels
 avisos, «Emails del pla» i distintiu «Pla + prepagament», amb explicació
 neutral. Imports de Brevo conservats; cap suma, descompte local, reinici
 o retorn a Free inferit. Llindars dels avisos i normalització no canviats.
@@ -352,5 +352,36 @@ sol·licituds SMTP. 70 proves, tipus, compilació i límits de secrets
 superats. Chrome UI/PWA superats: ordre i alineació 320–1280 px, absència
 de dades, saldos zero, dades antigues, regressions, offline i actualització
 controlada. Captures sintètiques mòbil/escriptori revisades visualment.
-Aquesta correcció encara no s'ha publicat ni desplegat; producció no
-modificada, avisos encara desactivats i cap correu o push real enviat.
+
+### Publicació i desplegament verificats
+
+2026-10-17: publicació i desplegament aprovats amb GPT-6.1 Sol / High.
+Commit públic `8510a86`, només a `main`; paquet del commit net i SHA-256
+verificat abans d'extreure. Clonació nova de GitHub amb arrel pública
+separada, autoria noreply i 355 objectes sense coincidències amb secrets
+coneguts. Revisió dirigida, no una auditoria externa ni garantia absoluta.
+
+Repetides les 70 proves, tipus, compilació i límits de secrets a Linux,
+amb dependències del build, uid 1000, treball temporal, sense xarxa externa
+ni secrets. La candidata ha llegit la configuració real en només lectura
+i verificat persistència sintètica de xifrat, contrasenya i noms en un
+espai separat. La comprovació completa ha passat sense canvis addicionals
+al codi del producte.
+
+Activada la versió `20261017t145757z-069fdba3`, contenidor saludable,
+arrel readonly i uid 1000. Bootstrap i claus readonly; només el muntatge
+privat d'accés és d'escriptura. Hash, secret de sessió, claus, noms i
+configuració idèntics abans i després; només el tag de `compose.env`
+ha canviat. Còpia privada de recuperació, release i imatge anteriors
+conservats. Temporals de comprovació retirats. Només reinici de MiniApp:
+Caddy, DNS i altres serveis intactes. Sessions revocades, mateixa
+contrasenya. Avisos continuen desactivats, sense correus ni push reals.
+
+HTTPS i Chrome mòbil verificats: recursos idèntics byte a byte al build,
+13 endpoints privats sense sessió `401` i `no-store`, manifest, worker,
+offline estàtic i represa. Cap login públic o consulta real dels comptes
+en aquesta verificació. Seleccionar «Free» al pla de referència des de
+Configuració activa l'explicació específica; el desplegament no canvia
+la referència privada de l'usuari. Cal tornar a entrar i acceptar
+«Actualitza l'app» si la PWA manté la versió anterior. iPhone real i
+entrega real dels canals continuen pendents.

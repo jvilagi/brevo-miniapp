@@ -59,7 +59,7 @@ zero en una subscripció activa. Un saldo absent es mostra com a desconegut.
 El dia de renovació introduït manualment és només una referència, no
 una data acreditada de l'API ni una regla per restablir saldo.
 
-### Correcció de l'ordre de presentació (local)
+### Correcció de l'ordre de presentació
 
 Revisió posterior del 2026-10-17: una nova consulta GET confirma que el
 saldo prepagament ha disminuït mentre l'entrada `subscription` es manté
@@ -74,7 +74,7 @@ entre plans mensuals de pagament (pla primer) i Free amb prepagament
 accés a funcions Starter: `planType=paid` i dates no acrediten per si sols
 una subscripció mensual ni la prioritat de consum d'un compte.
 
-Correcció local pendent de publicar i desplegar: prepagament primer a
+Correcció publicada i desplegada el 2026-10-17 (`8510a86`): prepagament primer a
 la vista i «Emails del pla» després, distintiu «Pla + prepagament» quan
 es retornen tots dos saldos i explicació neutral. L'ordre visual no és
 una simulació de facturació. Es mantenen els imports de cada resposta,

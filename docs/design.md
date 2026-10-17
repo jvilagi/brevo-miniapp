@@ -87,7 +87,7 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
   de subscripció» i «Crèdits prepagament». Estil i paleta existents, sense
   sumar-los. Tots dos conserven l'estat i timestamp de la quota; absència
   de reserva és «—», no zero. El camp manual continua sent una referència.
-- Correcció local posterior del 2026-10-17, pendent de publicar/desplegar:
+- Correcció posterior del 2026-10-17, publicada i desplegada (`8510a86`):
   crèdits prepagament primer (també en l'ordre de lectura accessible),
   «Emails del pla» després i distintiu «Pla + prepagament». Eliminada
   l'afirmació general que el pla es consumeix primer. El text deixa clar
@@ -169,11 +169,12 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.
-- Correcció local de l'ordre: prepagament abans del pla en el DOM i a
+- Correcció de l'ordre: prepagament abans del pla en el DOM i a
   la vista, imports alineats a 320–1280 px i disminució del prepagament
   sense restar saldo del pla o relacionar-lo amb SMTP. Etiquetes neutrals
   comprovades; captures mòbil/escriptori revisades. UI/PWA superats;
-  aquesta correcció continua pendent de publicar/desplegar.
+  aquesta correcció està publicada i desplegada, amb recursos HTTPS
+  idèntics als compilats verificats.
 - `scripts/check-pwa.mjs`: manifest, icones, cache limitada a estàtics,
   dades autenticades mai cachejades, offline, represa, logout i nova
   versió activada únicament després d'acceptar l'avís.

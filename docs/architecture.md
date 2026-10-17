@@ -94,12 +94,12 @@ sense sumar-les. Una subscripció zero amb reserva només es conserva com
 a tal amb context explícit de pagament actiu i període vàlid; el patró
 prepagament anterior es manté sense aquest context. Vegeu la validació API.
 
-Correcció local posterior del mateix dia: ordre visual prepagament/pla,
+Correcció posterior del mateix dia: ordre visual prepagament/pla,
 text neutral i etiqueta «Emails del pla». La prioritat de facturació no
 es dedueix de `plan.type`, del pla manual ni d'una vertical `paid`: el
 prepagament també pot donar accés a funcions de pagament. No es modifica
 la normalització dels imports ni s'implementa cap descompte local.
-Pendent de publicar/desplegar aquesta correcció de presentació.
+Publicada i desplegada des del commit `8510a86`.
 La referència manual Free adapta només el text i la font del saldo del
 pla quan hi ha prepagament: no són saldos simultàniament utilitzables.
 No canvia la quota normalitzada ni activa Free en esgotar crèdits.
