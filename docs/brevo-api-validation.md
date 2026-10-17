@@ -48,7 +48,7 @@ hi ha una reserva prepagament vàlida, es mostra separadament. No se sumen
 els saldos. Subscripció zero amb reserva, sense més context, conserva el
 règim prepagament ja verificat; combinacions conflictives queden desconegudes.
 
-Ajust local pendent de publicar i desplegar: la targeta mostra els dos
+Ajust publicat i desplegat el 2026-10-17 (`d38533d`): la targeta mostra els dos
 saldos com a xifres independents, no només la reserva en una nota. Si
 Brevo acredita una vertical Marketing de pagament activa i un període
 de subscripció explícit vàlid, es manté el saldo de subscripció zero amb

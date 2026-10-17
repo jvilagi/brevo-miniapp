@@ -259,7 +259,7 @@ remitents i operacions push. No s'ha iniciat sessió ni consultat dades
 reals per HTTPS en aquesta comprovació. Queden pendents el login de
 l'usuari després del reinici i l'entrega real de cada canal amb aprovació.
 
-## Doble saldo de subscripció i prepagament — ajust local
+## Doble saldo de subscripció i prepagament
 
 2026-10-17: comprovació i ajust aprovats amb GPT-6.1 Sol / High. GET real
 dels dos comptes, sense desar payloads complets ni exposar claus. Un compte
@@ -268,7 +268,7 @@ l'altre continua Free. La normalització ja obtenia tots dos saldos, però
 la reserva quedava en una nota petita. Els valors reals i noms privats no
 s'incorporen a la documentació pública ni a les dades sintètiques de prova.
 
-Ajustada la targeta local per mostrar dos números independents i grans,
+Ajustada la targeta per mostrar dos números independents i grans,
 separats de les sol·licituds SMTP d'avui. Sense sumar ni restar enviaments,
 sense substituir saldos reals per la referència manual. Estat i timestamp
 de la quota visibles a tots dos; dada absent no és zero.
@@ -285,5 +285,37 @@ secrets superats. Chrome UI/PWA verificats amb dades sintètiques: dos saldos
 alineats a 320–1280 px, subscripció esgotada, reserva zero o absent, dades
 antigues identificades a tots dos i regressions anteriors. Captures de
 targeta mòbil i escriptori revisades visualment. iPhone real no verificat.
-Aquest ajust encara no s'ha publicat ni desplegat. La versió activa, les
-claus, els fitxers privats i els avisos desactivats no s'han modificat.
+
+### Publicació i desplegament verificats
+
+2026-10-17: publicació i desplegament aprovats amb GPT-6.1 Sol / High.
+Commit públic `d38533d`, només a `main`. Clonació neta de GitHub amb
+`npm ci --include=optional` i `npm run check` superats: 70 proves, tipus,
+compilació i separació de secrets. Historial públic amb arrel separada,
+autoria noreply i 323 objectes revisats sense coincidències amb secrets
+coneguts. Revisió dirigida, no una auditoria externa ni garantia absoluta.
+
+Paquet del commit net, SHA-256 comprovat abans d'extreure i imatge
+construïda a Linux. La candidata sense xarxa ha comprovat la configuració
+real en només lectura i persistència xifrada, hash i noms amb dades
+sintètiques separades. Còpia privada de recuperació creada abans del canvi;
+la imatge i el release anteriors continuen disponibles.
+
+Activada la versió `20261017t120456z-c93b65b0`, contenidor saludable,
+usuari 1000 i arrel readonly. Només el muntatge privat d'accés és
+d'escriptura; claus i bootstrap continuen readonly. Hash de contrasenya,
+secret de sessió, claus, noms i configuració carregada idèntics abans i
+després; només el tag de `compose.env` ha canviat. No s'ha creat ni
+modificat el magatzem xifrat real durant aquesta operació. Fitxers i
+directori temporals de prova eliminats; backups privats conservats.
+Només s'ha reiniciat la MiniApp, sense canvis a Caddy, DNS o serveis aliens.
+Sessions revocades, mateixa contrasenya. Avisos encara desactivats:
+cap correu ni push real enviat.
+
+HTTPS i Chrome mòbil verificats: recursos públics idèntics byte a byte
+als compilats, 13 endpoints privats sense sessió rebutjats amb `401` i
+`no-store`, manifest, worker, offline estàtic i represa correctes. No s'ha
+fet login públic ni consultat dades reals per HTTPS en aquesta comprovació.
+L'usuari ha de tornar a entrar i acceptar «Actualitza l'app» si la PWA
+conserva la versió anterior. Safari/iPhone real i entrega real dels canals
+continuen pendents.

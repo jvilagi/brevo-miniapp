@@ -82,7 +82,7 @@ dades sintètiques. La versió anterior es conserva per a un possible retorn.
   inventar una referència per a una barra de consum.
   La targeta Free indica «Saldo disponible» segons Brevo i no promet
   una hora de reinici ni sincronització amb el dia de les mètriques SMTP.
-- Ajust local del 2026-10-17, pendent de publicar/desplegar: per a subscripció,
+- Ajust publicat i desplegat el 2026-10-17 (`d38533d`): per a subscripció,
   «Sol·licituds avui» en una fila i dos saldos destacats sota seu, «Emails
   de subscripció» i «Crèdits prepagament». Estil i paleta existents, sense
   sumar-los. Tots dos conserven l'estat i timestamp de la quota; absència
@@ -151,10 +151,11 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
   no equival a una entrega real ni a una prova d'iPhone.
   Permís denegat, registre i baixa de dispositiu comprovats al navegador
   amb PushManager simulat, sense contacte amb serveis push reals.
-- Doble saldo local: subscripció i prepagament destacats i alineats a
+- Doble saldo: subscripció i prepagament destacats i alineats a
   320–1280 px, zero real conservat, reserva absent «—», estat antic a
   tots dos blocs. Captures mòbil/escriptori sintètiques revisades; sense
-  números personals. La presentació ampliada està pendent de desplegar.
+  números personals. La presentació ampliada està publicada i desplegada;
+  els recursos HTTPS coincideixen amb la compilació verificada.
 - Captures de login, resum, desplegable, escriptori i error parcial,
   revisades visualment. Només dades sintètiques; a `test-results/ui/`,
   excloses de Git. No representen els saldos actuals dels comptes.

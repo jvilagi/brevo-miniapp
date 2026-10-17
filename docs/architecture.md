@@ -88,6 +88,12 @@ l'app tancada. Disseny Comptes/Avisos aprovat, estil existent preservat.
 Publicat i desplegat el mateix dia a partir del commit `e201b6c`;
 avisos reals desactivats fins a configurar i validar els canals.
 
+Ajust del 2026-10-17 publicat i desplegat des de `d38533d`: dues xifres
+destacades per a emails restants de subscripció i crèdits prepagament,
+sense sumar-les. Una subscripció zero amb reserva només es conserva com
+a tal amb context explícit de pagament actiu i període vàlid; el patró
+prepagament anterior es manté sense aquest context. Vegeu la validació API.
+
 `Workspace` és un magatzem privat versionat, xifrat AES-256-GCM, escrit
 atòmicament fora del checkout. Clau derivada amb HKDF de `SESSION_SECRET`:
 backup conjunt i migració abans de rotar-lo. El primer desament importa
