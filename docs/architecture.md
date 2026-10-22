@@ -170,6 +170,10 @@ canal push: registrat, pausat o actiu al servidor no equivalen a entrega
 confirmada. Regles de connexió i repetició en un bloc comú; desar-les no
 habilita automàticament el correu ni el servei global. El registre push
 es comprova en reprendre la pantalla, sense polling ni consulta de quotes.
+Clarificació publicada i desplegada el 2026-10-22 des de `27a6113`.
+Servei push activat amb autorització, correu preservat desactivat i una
+única prova push acceptada. Monitor independent del navegador verificat;
+recepció al dispositiu pendent de confirmació, cap prova real de correu.
 Canals provats amb dobles, sense correus o push reals. iPhone real pendent.
 La imatge candidata ha comprovat a Linux la lectura de la configuració
 existent i la persistència xifrada amb dades sintètiques, sense xarxa i

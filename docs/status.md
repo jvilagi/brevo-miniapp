@@ -532,7 +532,7 @@ ha distingit un avís extern basat en recompte propi de les regles de la
 MiniApp; no s'ha inspeccionat ni modificat el servei extern.
 Referència Free amb prepagament i llindars existents preservats.
 
-Implementat localment: resum separat de servei del servidor, correu i push;
+Implementat: resum separat de servei del servidor, correu i push;
 distinció entre dispositiu registrat, servei pausat i push actives al servidor.
 Permís del dispositiu i subscripció comprovats en reprendre Configuració.
 Regles de connexió i repetició en bloc comú; desament i prova separats.
@@ -541,5 +541,40 @@ Sense nous endpoints, secrets, format privat ni activació automàtica de correu
 94 proves (73 API + 21 web), tipus, compilació i límits de secrets superats.
 Prova específica amb doble d'emissor: només push, sense crida d'email ni
 consum del pressupost, bloqueig global respectat. Cap notificació real
-durant les proves locals. Publicació, desplegament, activació del servei
-amb correu desactivat i una única prova push real autoritzats, pendents.
+durant les proves locals. Chrome UI/PWA/arrencada superats amb dades
+sintètiques, inclosos servei pausat amb dispositiu registrat, push actives
+amb correu desactivat, desament de regles comunes sense activar correu,
+permís denegat i amplades 320–1280 px. Captures revisades visualment.
+
+### Publicació, desplegament i activació verificats
+
+Commit públic `27a6113`, només a `main`, i versió
+`20261022t070723z-317d20cd`. Paquet del commit net, SHA-256 verificat i
+94 proves repetides a Linux sense secrets ni xarxa externa. Candidata
+amb configuració real readonly i persistència sintètica separada.
+Clonació nova amb arrel pública separada: 101 fitxers i 462 objectes
+revisats sense coincidències amb secrets coneguts o patrons privats.
+Revisió dirigida, no una auditoria externa. Historial privat no publicat.
+
+Activació push expressament autoritzada. Afegit només el gate de
+notificacions a runtime privat; abans era absent i es considerava false.
+Correu desactivat, dispositiu i claus VAPID existents conservats.
+Amb el procés principal aturat per evitar escriptors concurrents,
+una única prova push real ha estat acceptada pel proveïdor i registrada
+durablement com a prova push. Protecció privada contra repetir-la.
+Cap crida d'email ni increment del pressupost de correus.
+
+Procés principal recreat i saludable, uid 1000, arrel readonly i zero
+reinicis automàtics observats. Monitor en segon pla verificat per estat
+d'incidents i una mostra de quota recent, sense navegador ni login real.
+Metadades, llindars, comptes, claus Brevo, hash de contrasenya, secret de
+sessió i subscripció push intactes. Canvis operatius esperats: revisió,
+historial de prova, incidents del monitor i mostres de saldo.
+Sessions revocades pel reinici; mateixa contrasenya.
+
+HTTPS i Chrome mòbil verificats: recursos idèntics al build, 13 endpoints
+privats sense sessió `401` i `no-store`, manifest, icones, worker, offline,
+represa i recuperació. Còpia privada, imatge i release anteriors conservats;
+Caddy, DNS i altres aplicacions intactes. Temporals de verificació retirats.
+Acceptació del servei push no acredita aparició ni lectura: confirmació
+de recepció amb l'app tancada pendent de l'usuari. Sense prova real de correu.
