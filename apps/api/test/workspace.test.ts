@@ -306,3 +306,25 @@ test('avisos: el rebuig del correu no atura les notificacions push', async t => 
   assert.equal(pushes, 1);
   assert.deepEqual(workspace.settings().deliveries.map(row => row.status), ['rejected', 'accepted']);
 });
+test('avisos: prova només push, gate explícit i cap correu ni consum del pressupost', async t => {
+  const { workspace } = await configured(t); let pushes = 0, emails = 0, reads = 0;
+  let budget: { day: string; attempts: number } | undefined;
+  await workspace.edit(null, draft => {
+    draft.alerts.enabled = false; draft.alerts.recipient = ''; draft.alerts.senderAccountId = ''; draft.alerts.senderId = null;
+    draft.push.keys = generatePushKeys(); draft.push.enabled = true;
+    draft.push.devices.push({ ...pushFixture(), id: 'device', label: 'Prova', createdAt: new Date().toISOString() });
+    budget = structuredClone(draft.emailBudget);
+  });
+  const monitor = new AlertMonitor(workspace, async () => { reads++; return [quota(10)]; }, { async send() { emails++; } }, Date.now, { async send() { pushes++; } });
+  workspace.deliveryEnabled = false;
+  await monitor.tick(); await assert.rejects(monitor.test(workspace.settings().revision));
+  assert.equal(reads, 0); assert.equal(pushes, 0); assert.equal(emails, 0);
+  workspace.deliveryEnabled = true;
+  await monitor.test(workspace.settings().revision);
+  assert.equal(pushes, 1); assert.equal(emails, 0); assert.equal(reads, 0);
+  assert.equal(workspace.settings().deliveries.length, 1);
+  assert.equal(workspace.settings().deliveries[0]!.channel, 'push'); assert.equal(workspace.settings().deliveries[0]!.kind, 'test');
+  assert.equal(workspace.settings().deliveries[0]!.status, 'accepted');
+  assert.equal(workspace.settings().alerts.enabled, false);
+  await workspace.edit(null, draft => { assert.deepEqual(draft.emailBudget, budget); });
+});

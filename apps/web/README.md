@@ -86,7 +86,7 @@ Autoria i llicència:
 [`public/brand/README.md`](public/brand/README.md) i `../../NOTICE`.
 Els recursos de marca estan inclosos a la cache estàtica de la PWA.
 
-16 proves de peticions, presentació i worker incloses a `npm test`, inclosos límits de temps,
+21 proves de peticions, presentació i worker incloses a `npm test`, inclosos límits de temps,
 cancel·lació, validació de sessió, absència de reintents POST, el comptador i el saldo Free
 independent de les sol·licituds SMTP i sense hora de reinici inventada.
 La comprovació de navegador

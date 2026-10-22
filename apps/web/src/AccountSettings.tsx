@@ -3,6 +3,7 @@ import { accountColors, accountIcons, type EmailAlerts, type ManagedAccount, typ
 import * as api from './api';
 import { Icon } from './icons';
 import { number, updatedLabel } from './presentation';
+import { notificationStatus } from './notification-status';
 
 const iconLabels = { mail: 'Correu', home: 'Personal', work: 'Feina', school: 'Escola', heart: 'Projecte', globe: 'Web' };
 const colorLabels = { green: 'Verd', purple: 'Violeta', blue: 'Blau', teal: 'Turquesa', amber: 'Ambre', rose: 'Rosa' };
@@ -22,6 +23,8 @@ export function AccountSettings({ onChanged, onExpired, onCancel }: {
   const [credential, setCredential] = useState(''), [password, setPassword] = useState('');
   const [pending, setPending] = useState(false), [error, setError] = useState<string | null>(null), [message, setMessage] = useState<string | null>(null);
   const [retry, setRetry] = useState(0), [subscribed, setSubscribed] = useState(false);
+  const [deviceChecked, setDeviceChecked] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('Notification' in window ? Notification.permission : 'unsupported');
   useEffect(() => {
     const controller = new AbortController(); setError(null);
     void api.workspace(controller.signal).then(result => { if (!controller.signal.aborted) { setSettings(result); setAlerts(current => current ?? result.alerts); } }).catch(failure => {
@@ -41,10 +44,17 @@ export function AccountSettings({ onChanged, onExpired, onCancel }: {
   }, [tab, alerts?.senderAccountId]);
   useEffect(() => {
     let active = true;
-    if ('serviceWorker' in navigator && 'PushManager' in window) void navigator.serviceWorker.getRegistration().then(async registration => {
-      const subscription = await registration?.pushManager.getSubscription(); if (active) setSubscribed(Boolean(subscription));
-    }).catch(() => {});
-    return () => { active = false; };
+    const check = () => {
+      if (document.hidden) return;
+      setPermission('Notification' in window ? Notification.permission : 'unsupported');
+      if ('serviceWorker' in navigator && 'PushManager' in window) void navigator.serviceWorker.getRegistration().then(async registration => {
+        const subscription = await registration?.pushManager.getSubscription();
+        if (active) { setSubscribed(Boolean(subscription)); setDeviceChecked(true); }
+      }).catch(() => { if (active) setDeviceChecked(false); });
+      else setDeviceChecked(true);
+    };
+    check(); document.addEventListener('visibilitychange', check);
+    return () => { active = false; document.removeEventListener('visibilitychange', check); };
   }, []);
   function failed(failure: unknown) {
     if (failure instanceof api.ApiFailure && failure.status === 401) { onExpired(); return; }
@@ -103,12 +113,14 @@ export function AccountSettings({ onChanged, onExpired, onCancel }: {
     try {
       if (!subscribed) {
         // Ha de començar directament amb el gest de l'usuari, abans de cap consulta de xarxa.
-        if (await Notification.requestPermission() !== 'granted') { setError('No s’ha donat permís per rebre notificacions. Pots revisar-lo als ajustos del dispositiu.'); return; }
+        const allowed = await Notification.requestPermission(); setPermission(allowed);
+        if (allowed !== 'granted') { setError('No s’ha donat permís per rebre notificacions. Pots revisar-lo als ajustos del dispositiu.'); return; }
         const registration = await navigator.serviceWorker.ready, { publicKey } = await api.pushKey();
         const bytes = Uint8Array.from(atob(publicKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
         const existing = await registration.pushManager.getSubscription();
         const subscription = existing ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer });
-        try { accept(await api.subscribePush(subscription.toJSON(), 'Dispositiu personal'), false); setSubscribed(true); setMessage('Dispositiu registrat per als avisos push.'); }
+        try { const result = await api.subscribePush(subscription.toJSON(), 'Dispositiu personal'); accept(result, false); setSubscribed(true); setDeviceChecked(true);
+          setMessage(result.deliveryEnabled ? 'Dispositiu registrat. El servidor pot enviar-hi avisos push quan es compleixin els llindars.' : 'Dispositiu registrat, però els avisos continuen pausats al servidor.'); }
         catch (failure) { if (!existing) await subscription.unsubscribe(); throw failure; }
       } else {
         const registration = await navigator.serviceWorker.ready, subscription = await registration.pushManager.getSubscription();
@@ -118,6 +130,7 @@ export function AccountSettings({ onChanged, onExpired, onCancel }: {
     } catch (failure) { failed(failure); } finally { setPending(false); }
   }
   const updateEditor = (change: Partial<ReturnType<typeof emptyAccount>>) => { if (editor) setEditor({ ...editor, account: { ...editor.account, ...change } }); };
+  const status = settings ? notificationStatus(settings) : null;
   return <section className="settings-page" aria-labelledby="settings-title">
     <div className="settings-title"><h1 id="settings-title">Configuració</h1><button className="quiet-button" disabled={pending} onClick={onCancel}>Torna als comptes</button></div>
     <div className="period-switch" role="group" aria-label="Seccions de configuració">
@@ -156,25 +169,43 @@ export function AccountSettings({ onChanged, onExpired, onCancel }: {
         {editor.id && <button className="quiet-button danger-button" type="button" onClick={() => { void disconnect(); }}>Desconnecta de la MiniApp</button>}
         </fieldset>
       </form>}
-    </> : alerts && <>
-      {!settings.deliveryEnabled && <p className="notice">Els enviaments estan desactivats al servidor. Pots preparar la configuració; no s’enviaran avisos fins que s’habilitin.</p>}
-      <form className="login-card alert-editor" onSubmit={event => { void saveNotifications(event); }}><h2>Avisos per correu</h2><fieldset disabled={pending}>
+    </> : alerts && status && <>
+      <section className="login-card notification-status" aria-labelledby="notification-status-title">
+        <h2 id="notification-status-title">Estat de les notificacions</h2>
+        <dl><div><dt>Servei al servidor</dt><dd>{status.service}</dd></div>
+          <div><dt>Correu</dt><dd className={status.emailActive ? 'notification-active' : ''}>{status.email}</dd></div>
+          <div><dt>Push</dt><dd className={status.pushActive ? 'notification-active' : ''}>{status.push}</dd></div></dl>
+        <p className="helper">{!settings.deliveryEnabled ? 'Cap avís pot sortir: el servei està pausat al servidor, encara que registris un dispositiu. L’activació del servei requereix configuració del servidor.' :
+          status.monitorActive ? 'El servidor comprova els llindars cada 5 minuts, també amb l’app tancada. Només utilitza els canals actius.' :
+            'El servei està habilitat, però no hi ha cap canal operatiu. Configura correu o registra un dispositiu push.'}</p>
+        <p className="helper">Registrar un dispositiu no confirma l’entrega. El permís, la connexió i els ajustos del sistema també hi intervenen.</p>
+      </section>
+      <form className="notification-form" onSubmit={event => { void saveNotifications(event); }}>
+      <section className="login-card notification-rules"><h2>Regles comunes dels avisos</h2><fieldset disabled={pending}>
+        <p className="helper">S’apliquen tant al correu com a les push. Els llindars de saldo i de previsió es configuren a cada compte.</p>
+        <label className="check-label"><input type="checkbox" checked={alerts.connectionErrors} onChange={event => setAlerts({ ...alerts, connectionErrors: event.target.checked })}/>Avisa si falten dades fresques durant 15 minuts</label>
+        <label htmlFor="alert-repeat">Repeteix un avís pendent cada</label><select id="alert-repeat" value={alerts.repeatMinutes} onChange={event => setAlerts({ ...alerts, repeatMinutes: Number(event.target.value) })}><option value="60">Hora</option><option value="360">6 hores</option><option value="1440">24 hores</option><option value="10080">7 dies</option></select>
+        <p className="helper">Els canvis s’apliquen quan prems «Desa els avisos». La prova utilitza els canals desats, no els canvis pendents del formulari.</p>
+      </fieldset></section>
+      <section className="login-card alert-editor"><h2>Avisos per correu</h2><fieldset disabled={pending}>
         <label className="check-label"><input type="checkbox" checked={alerts.enabled} onChange={event => setAlerts({ ...alerts, enabled: event.target.checked })}/>Activa els avisos per correu</label>
         <label htmlFor="alert-recipient">Correu destinatari</label><input id="alert-recipient" type="email" autoComplete="email" maxLength={254} required={alerts.enabled} value={alerts.recipient} onChange={event => setAlerts({ ...alerts, recipient: event.target.value })}/>
         <label htmlFor="alert-account">Compte Brevo que paga els avisos</label><select id="alert-account" required={alerts.enabled} value={alerts.senderAccountId} onChange={event => setAlerts({ ...alerts, senderAccountId: event.target.value, senderId: null })}><option value="">Tria un compte</option>{settings.accounts.filter(a => a.connected).map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select>
         <label htmlFor="alert-sender">Remitent actiu d’aquest compte</label><select id="alert-sender" required={alerts.enabled} disabled={pending || sendersLoading} value={alerts.senderId ?? ''} onChange={event => setAlerts({ ...alerts, senderId: numeric(event.target.value) })}><option value="">{sendersLoading ? 'Consultant remitents…' : 'Tria un remitent verificat'}</option>{senders.map(sender => <option key={sender.id} value={sender.id}>{sender.name} · {sender.email}</option>)}</select>
         <p className="helper">Cada correu acceptat s’envia des d’aquest compte i consumeix el seu saldo. Ja s’inclourà en les dades Brevo; la MiniApp no el resta de nou. Sense saldo o remitent vàlid, el correu pot fallar; les push són independents.</p>
-        <label className="check-label"><input type="checkbox" checked={alerts.connectionErrors} onChange={event => setAlerts({ ...alerts, connectionErrors: event.target.checked })}/>Avisa si falten dades fresques durant 15 minuts</label>
-        <label htmlFor="alert-repeat">Repeteix un avís pendent cada</label><select id="alert-repeat" value={alerts.repeatMinutes} onChange={event => setAlerts({ ...alerts, repeatMinutes: Number(event.target.value) })}><option value="60">Hora</option><option value="360">6 hores</option><option value="1440">24 hores</option><option value="10080">7 dies</option></select>
-        <p className="helper">El servidor comprova els llindars cada 5 minuts, encara que tanquis l’app. Els llindars de saldo es configuren a cada compte. Màxim 20 intents de correu per dia UTC.</p>
-        <label htmlFor="alert-password">Contrasenya de la MiniApp per desar o provar</label><input id="alert-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/>
-        <button className="primary-button" type="submit">Desa els avisos<Icon name="arrow"/></button>
-        <button className="quiet-button password-cancel" type="button" disabled={!settings.deliveryEnabled || !settings.alerts.enabled && !settings.pushEnabled} onClick={() => { void testNotifications(); }}>Envia una prova als canals actius</button>
-        </fieldset></form>
+        <p className="helper">Màxim 20 intents de correu per dia UTC. Desactivar el correu no desactiva les push.</p>
+        </fieldset></section>
       <section className="login-card push-editor"><h2>Notificacions push</h2><p className="settings-help">Funcionen amb l’app tancada. A l’iPhone: afegeix la MiniApp a la pantalla d’inici, obre-la des d’allà i dona permís. Els avisos no mostren saldos ni noms privats a la pantalla bloquejada.</p>
+        <p className="helper device-push-status">{permission === 'unsupported' ? 'Aquest navegador no ofereix notificacions push.' : permission === 'denied' ? 'Permís de notificacions denegat en aquest dispositiu. Revisa els ajustos del sistema o del navegador.' :
+          !deviceChecked ? 'Comprovant la subscripció d’aquest dispositiu…' : subscribed ? 'Aquest navegador té una subscripció push. Revisa també l’estat del servei indicat més amunt.' : 'Aquest dispositiu encara no té una subscripció push.'}</p>
         <button className="quiet-button" disabled={pending} type="button" onClick={() => { void pushToggle(); }}>{subscribed ? 'Desactiva en aquest dispositiu' : 'Activa en aquest dispositiu'}</button>
         <p className="helper">{settings.pushDevices.length} dispositius registrats. Sense consum de crèdits Brevo. El sistema pot retardar o silenciar les notificacions.</p>
       </section>
+      <section className="login-card notification-save"><h2>Desament i prova</h2><fieldset disabled={pending}>
+        <label htmlFor="alert-password">Contrasenya de la MiniApp per desar o provar</label><input id="alert-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/>
+        <button className="primary-button" type="submit">Desa els avisos<Icon name="arrow"/></button>
+        <button className="quiet-button password-cancel" type="button" disabled={!status.emailActive && !status.pushActive} onClick={() => { void testNotifications(); }}>Envia una prova als canals actius</button>
+      </fieldset></section></form>
       <section className="login-card delivery-history"><h2>Historial d’avisos</h2><p className="settings-help">Acceptat vol dir que el servei ha acceptat l’enviament, no que s’hagi llegit o entregat. Pendent o incert no es reenvia immediatament.</p>
         {!settings.deliveries.length ? <p className="helper">Encara no hi ha intents registrats.</p> : <ul>{[...settings.deliveries].reverse().slice(0, 20).map(delivery => <li key={delivery.id}>
           <span>{updatedLabel(delivery.at, 'UTC')} UTC · {delivery.channel === 'email' ? `Correu · ${settings.accounts.find(a => a.id === delivery.accountId)?.name ?? 'Compte desconnectat'}` : 'Push · sense crèdits'}</span>

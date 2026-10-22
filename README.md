@@ -88,6 +88,10 @@ han de viure fora del codi i de la imatge Docker.
   Tries destinatari, compte Brevo que paga els correus i remitent actiu.
   Les push no consumeixen crèdits Brevo. Requereixen permís del dispositiu;
   a l'iPhone, app afegida a la pantalla d'inici (iOS 16.4 o posterior).
+- Configuració → Avisos diferencia el servei del servidor, el correu i les
+  push. Un dispositiu registrat no vol dir que el servei estigui habilitat
+  ni que una notificació s'hagi entregat. Les regles de connexió i repetició
+  són comunes als dos canals; les push poden funcionar amb el correu desactivat.
 - Previsió orientativa d'esgotament del prepagament: almenys set dies de
   lectures reals del saldo, no una suma d'enviaments SMTP. Historial privat
   xifrat al servidor; abans de tenir prou dades es mostra «Recollint historial».
@@ -105,7 +109,7 @@ han de viure fora del codi i de la imatge Docker.
 npm run check
 ```
 
-Comprova tipus, 88 proves (72 API + 16 peticions/presentació/worker), compilació i separació
+Comprova tipus, 94 proves (73 API + 21 peticions/presentació/worker), compilació i separació
 de secrets. Les proves utilitzen dades sintètiques i no contacten amb Brevo.
 També hi ha `npm test`, `npm run typecheck` i `npm run build`.
 

@@ -45,12 +45,12 @@ En desenvolupament Vite usa el port 5174 i
 redirigeix `/api` al backend local del port 3000; el servidor compilat
 serveix conjuntament HTML, recursos i API.
 
-Hi ha 72 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
+Hi ha 73 proves de backend: accés privat, sessions, canvi persistent de contrasenya,
 límit d'intents, errors públics,
 fitxers privats, memòria cau HTTP i de dades, configuració, quotes,
 mètriques desconegudes, períodes i errors parcials. Les sessions i
 consultes Brevo ja estan connectades; el recorregut autenticat s'ha
-verificat amb els dos comptes reals. Hi ha 16 proves de peticions/presentació/worker i la
+verificat amb els dos comptes reals. Hi ha 21 proves de peticions/presentació/worker i la
 interfície s'ha comprovat en Chrome mòbil/escriptori amb dades sintètiques.
 Manifest, icones i worker només estàtic implementats. Offline, represa,
 logout i actualització acceptada verificats amb Chrome, sense cache de
@@ -165,6 +165,11 @@ pot fallar o esgotar el pressupost sense bloquejar aquest canal. A l'iPhone
 requereix iOS 16.4+ i instal·lació a la pantalla d'inici. Les subscripcions
 no caduquen amb el logout; revocació per dispositiu o gate global de servidor.
 Historial de 100 intents, no una prova d'entrega ni garantia exactly-once.
+Configuració mostra separadament el gate global, el canal de correu i el
+canal push: registrat, pausat o actiu al servidor no equivalen a entrega
+confirmada. Regles de connexió i repetició en un bloc comú; desar-les no
+habilita automàticament el correu ni el servei global. El registre push
+es comprova en reprendre la pantalla, sense polling ni consulta de quotes.
 Canals provats amb dobles, sense correus o push reals. iPhone real pendent.
 La imatge candidata ha comprovat a Linux la lectura de la configuració
 existent i la persistència xifrada amb dades sintètiques, sense xarxa i
@@ -297,7 +302,7 @@ canviar-ho exigeix definir explícitament proxies de confiança.
 
 ## Verificació
 
-88 proves de càlculs, accés, configuració, avisos, previsió, peticions, presentació i worker; comprovació de tipus, aïllament
+94 proves de càlculs, accés, configuració, avisos, previsió, peticions, presentació i worker; comprovació de tipus, aïllament
 de secrets, errors parcials i compilació. Proves Chrome de UI i PWA
 amb dades sintètiques, inclosa l'arrencada amb sessió bloquejada. HTTPS públic comprovat amb worker, offline i
 represa; lectura real dels dos comptes des del contenidor de producció.

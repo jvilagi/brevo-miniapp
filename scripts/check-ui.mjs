@@ -168,6 +168,10 @@ async function verify(browserType, label, executablePath) {
     assert.equal(await page.locator('.managed-account').count(), 2);
     await page.screenshot({ path: join(directory, `${label}-settings.png`), fullPage: true });
     await page.getByRole('button', { name: 'Avisos', exact: true }).click();
+    assert((await page.locator('.notification-status').innerText()).includes('Pausat al servidor'));
+    assert((await page.locator('.notification-status').innerText()).includes('Desactivat'));
+    assert.equal(await page.locator('.notification-rules #alert-repeat').count(), 1);
+    assert.equal(await page.locator('.alert-editor #alert-repeat').count(), 0);
     await page.getByLabel('Activa els avisos per correu', { exact: true }).check();
     await page.getByLabel('Correu destinatari', { exact: true }).fill('recipient@example.test');
     await page.getByLabel('Compte Brevo que paga els avisos', { exact: true }).selectOption('2');
@@ -193,6 +197,29 @@ async function verify(browserType, label, executablePath) {
     await page.getByRole('button', { name: 'Activa en aquest dispositiu', exact: true }).click();
     await page.getByRole('button', { name: 'Desactiva en aquest dispositiu', exact: true }).waitFor();
     assert.equal(workspace.settings().pushDevices.length, 1);
+    assert((await page.locator('.notification-status').innerText()).includes('Registrades · servei pausat'));
+    assert(await page.getByRole('button', { name: 'Envia una prova als canals actius', exact: true }).isDisabled());
+    await page.screenshot({ path: join(directory, `${label}-notifications-paused.png`), fullPage: true });
+    // Activació sintètica: sense quotaReader, cap enviament extern.
+    workspace.deliveryEnabled = true;
+    await workspace.edit(null, draft => { draft.alerts.enabled = false; });
+    await page.getByRole('button', { name: 'Torna als comptes', exact: true }).click();
+    await page.getByRole('button', { name: 'Configuració', exact: true }).click();
+    await page.getByRole('button', { name: 'Avisos', exact: true }).click();
+    await page.getByText('Actives al servidor', { exact: true }).waitFor();
+    assert((await page.locator('.notification-status').innerText()).includes('Desactivat'));
+    assert(!(await page.getByLabel('Activa els avisos per correu', { exact: true }).isChecked()));
+    assert(!(await page.getByRole('button', { name: 'Envia una prova als canals actius', exact: true }).isDisabled()));
+    await page.getByLabel('Repeteix un avís pendent cada', { exact: true }).selectOption('360');
+    await page.getByLabel('Contrasenya de la MiniApp per desar o provar', { exact: true }).fill(password);
+    await page.getByRole('button', { name: 'Desa els avisos', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Configuració dels avisos desada.' }).waitFor();
+    assert.equal(workspace.settings().alerts.enabled, false); assert.equal(workspace.settings().alerts.repeatMinutes, 360);
+    assert.equal(workspace.settings().pushEnabled, true);
+    for (const width of [320, 375, 390, 430, 760, 761, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(page); }
+    await page.screenshot({ path: join(directory, `${label}-notifications-active-desktop.png`), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.screenshot({ path: join(directory, `${label}-notifications-active-390.png`), fullPage: true });
     await page.getByRole('button', { name: 'Desactiva en aquest dispositiu', exact: true }).click();
     await page.getByRole('button', { name: 'Activa en aquest dispositiu', exact: true }).waitFor();
     assert.equal(workspace.settings().pushDevices.length, 0);

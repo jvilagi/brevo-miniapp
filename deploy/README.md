@@ -58,12 +58,17 @@ defineix **el teu** `PUBLIC_ORIGIN=https://el-teu-domini` sense barra final,
 verifica `BREVO_TIMEZONE` i posa noms propis als comptes. Producció no
 té un domini per defecte. Les claus van a `accounts.env`, no a runtime.
 Per als comptes afegits des del formulari, les claus van al magatzem xifrat.
-`ENABLE_NOTIFICATIONS=false` és el valor inicial. Per activar correu i
-push, configura canals i llindars a l'app, posa'l a `true` en aquest fitxer
+`ENABLE_NOTIFICATIONS=false` és el valor inicial. Per permetre avisos,
+configura canals i llindars a l'app, posa'l a `true` en aquest fitxer
 privat i recrea el servei. Requereix sortida HTTPS a Brevo i serveis push
 Google/Mozilla/Apple. El monitor funciona cada 5 minuts amb el backend
 actiu; no depèn del navegador ni d'un cron extern. Aturar els canals no
 cancel·la enviaments ja en curs.
+
+El gate global no activa per si sol el correu ni registra dispositius.
+Per habilitar només push, deixa «Activa els avisos per correu» desmarcat,
+registra el dispositiu i habilita el gate. Configuració mostra cada estat
+separadament. Registrar un dispositiu amb el gate pausat no inicia el monitor.
 
 `compose.env` conté només `BREVO_PRIVATE_DIR` (camí absolut de `private`)
 i `BREVO_RELEASE` (tag de la versió). No utilitzis un camí amb salts de

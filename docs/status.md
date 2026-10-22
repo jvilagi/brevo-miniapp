@@ -1,6 +1,6 @@
 # Estat del projecte
 
-Actualització: 2026-10-17, Europe/Madrid.
+Actualització: 2026-10-22, Europe/Madrid.
 
 ## Implementat
 
@@ -35,7 +35,7 @@ Exclusions de secrets reforçades per a Git, Docker i empaquetat.
 
 ## Verificació i pendents
 
-88 proves, tipus, compilació i separació de secrets. Proves Chrome amb
+94 proves, tipus, compilació i separació de secrets. Proves Chrome amb
 dades sintètiques: amplades 320–1280, accés, errors, gràfic, logout,
 offline, represa i canvi de versió. Passos de configuració privada
 comprovats sense sobreescriure fitxers existents.
@@ -524,3 +524,22 @@ abans de retornar a una versió antiga; no s'han de perdre canvis posteriors.
 Caddy, DNS i serveis aliens no modificats. Safari/iPhone real i entrega
 real dels canals continuen pendents; cal acceptar l'actualització de la
 PWA i tornar a entrar després del reinici.
+
+## Estat de notificacions i activació només push
+
+2026-10-22: revisió i ajust aprovats amb GPT-6.1 Sol / High. La revisió
+ha distingit un avís extern basat en recompte propi de les regles de la
+MiniApp; no s'ha inspeccionat ni modificat el servei extern.
+Referència Free amb prepagament i llindars existents preservats.
+
+Implementat localment: resum separat de servei del servidor, correu i push;
+distinció entre dispositiu registrat, servei pausat i push actives al servidor.
+Permís del dispositiu i subscripció comprovats en reprendre Configuració.
+Regles de connexió i repetició en bloc comú; desament i prova separats.
+Sense nous endpoints, secrets, format privat ni activació automàtica de correu.
+
+94 proves (73 API + 21 web), tipus, compilació i límits de secrets superats.
+Prova específica amb doble d'emissor: només push, sense crida d'email ni
+consum del pressupost, bloqueig global respectat. Cap notificació real
+durant les proves locals. Publicació, desplegament, activació del servei
+amb correu desactivat i una única prova push real autoritzats, pendents.

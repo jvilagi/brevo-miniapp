@@ -137,7 +137,13 @@ reintent; les dades dels comptes no es conserven entre recàrregues.
 
 ## Comprovacions
 
-- 16 proves de peticions/presentació/worker: sessió vàlida, límits de temps,
+Configuració → Avisos diferencia servei del servidor, correu i push, amb
+estats explícits per a dispositiu registrat però servei pausat, push actives
+amb correu desactivat i configuració incompleta. Regles de connexió i
+repetició comunes, desament/prova separats i estat del permís del dispositiu.
+Mateixa paleta i estructura de targetes, sense logotips oficials.
+
+- 21 proves de peticions/presentació/worker: sessió vàlida, límits de temps,
   cancel·lació, POST sense reintent, temps transcorregut, format català, desconeguts, Free/prepagament/subscripció,
   saldo sense hora de reinici no verificada, escala i buits del gràfic,
   dades antigues i fus horari.

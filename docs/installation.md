@@ -216,9 +216,15 @@ continuen sent la referència per a dades antigues o en cache.
 Per defecte **no s'envia res**. Configura primer els llindars de cada
 compte i la pestanya **Avisos**. Quan vulguis activar el servei, estableix
 `ENABLE_NOTIFICATIONS=true` a l'entorn privat del backend i recrea'l.
-Aquest interruptor habilita els dos canals; posar-lo a `false` i recrear
-el backend els atura. No és una automatització del navegador: necessita
+Aquest interruptor permet els canals que hagis configurat i activat;
+posar-lo a `false` i recrear el backend els atura. No és una automatització del navegador: necessita
 el servidor en funcionament, encara que tanquis l'app.
+
+Per rebre només push, deixa el correu desactivat i registra el dispositiu.
+El resum d'estat diferencia servei habilitat, correu desactivat i push
+actives. Amb el servei pausat només es prepara el registre: no s'envia res.
+Les opcions de connexió i repetició són comunes als dos canals i es desen
+amb «Desa els avisos», independentment de l'activació del correu.
 
 - **Correu:** tria destinatari, compte Brevo que paga l'enviament i un
   remitent actiu obtingut d'aquell compte. Confirma la contrasenya per
