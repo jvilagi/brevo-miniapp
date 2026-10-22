@@ -173,8 +173,9 @@ es comprova en reprendre la pantalla, sense polling ni consulta de quotes.
 Clarificació publicada i desplegada el 2026-10-22 des de `27a6113`.
 Servei push activat amb autorització, correu preservat desactivat i una
 única prova push acceptada. Monitor independent del navegador verificat;
-recepció al dispositiu pendent de confirmació, cap prova real de correu.
-Canals provats amb dobles, sense correus o push reals. iPhone real pendent.
+acceptació del proveïdor no equival a entrega garantida a cada dispositiu.
+Proves automatitzades dels canals amb dobles, cap prova real de correu.
+La regressió completa de Safari/iPhone continua pendent.
 La imatge candidata ha comprovat a Linux la lectura de la configuració
 existent i la persistència xifrada amb dades sintètiques, sense xarxa i
 sense alterar fitxers privats reals. HTTPS, protecció dels endpoints i

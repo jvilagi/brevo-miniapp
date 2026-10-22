@@ -576,5 +576,6 @@ HTTPS i Chrome mòbil verificats: recursos idèntics al build, 13 endpoints
 privats sense sessió `401` i `no-store`, manifest, icones, worker, offline,
 represa i recuperació. Còpia privada, imatge i release anteriors conservats;
 Caddy, DNS i altres aplicacions intactes. Temporals de verificació retirats.
-Acceptació del servei push no acredita aparició ni lectura: confirmació
-de recepció amb l'app tancada pendent de l'usuari. Sense prova real de correu.
+Acceptació del servei push no acredita per si sola aparició ni lectura;
+l'entrega també depèn de la connexió, els permisos i els ajustos del dispositiu.
+Sense prova real de correu ni regressió completa de Safari/iPhone.
